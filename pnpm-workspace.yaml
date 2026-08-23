@@ -52,3 +52,4 @@ catalog:
   webpack: ^4.41.2
   "@vitest/coverage-v8": 4.1.11
   typescript: ^7.0.2
+  "@e18e/eslint-plugin": ^0.8.0

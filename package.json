@@ -27,6 +27,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@e18e/eslint-plugin": "catalog:",
     "@types/clone": "catalog:",
     "@types/debug": "catalog:",
     "@types/html-escaper": "catalog:",

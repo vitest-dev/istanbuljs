@@ -1,6 +1,6 @@
 {
   "editor.defaultFormatter": "oxc.oxc-vscode",
-  "[javascript][typescript]": {
+  "[typescript]": {
     "editor.codeActionsOnSave": {
       "source.fixAll.oxc": "explicit"
     },

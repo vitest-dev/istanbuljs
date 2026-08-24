@@ -38,7 +38,6 @@
     "@vitest/istanbul-lib-coverage": "workspace:*"
   },
   "devDependencies": {
-    "@types/babel__core": "catalog:",
     "tsdown": "catalog:",
     "yaml": "catalog:"
   },

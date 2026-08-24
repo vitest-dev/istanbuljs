@@ -1,5 +1,5 @@
 import type { ParserPlugin } from "@babel/parser";
-import { assert, describe, it, expect } from "vitest";
+import { assert, describe, it } from "vitest";
 
 import Instrumenter from "../src/instrumenter";
 
@@ -23,31 +23,19 @@ const generateCode = (
 };
 
 describe("generatorOpts", () => {
-  describe("when the code has import attributes", () => {
-    describe('using "with" importAttributesKeyword', () => {
-      it("should produce configured keyword", () => {
-        const generated = generateCode(
-          codeWithImportAttribute,
-          [["importAttributes", { deprecatedAssertSyntax: true }]],
-          { importAttributesKeyword: "with" },
-        );
-        assert(generated);
-        assert(typeof generated === "string");
-        assert(generated.includes("with{type:'json'}"));
-      });
-    });
+  it("preserves import attributes", () => {
+    const generated = generateCode(codeWithImportAttribute, []);
+    assert(generated);
+    assert(typeof generated === "string");
+    assert(generated.includes("with{type:'json'}"));
+  });
 
-    describe('using "assert" importAttributesKeyword', () => {
-      it("should produce configured keyword", () => {
-        const generated = generateCode(
-          codeWithImportAttribute,
-          [["importAttributes", { deprecatedAssertSyntax: true }]],
-          { importAttributesKeyword: "assert" },
-        );
-        assert(generated);
-        assert(typeof generated === "string");
-        assert(generated.includes("assert{type:'json'}"));
-      });
-    });
+  it("passes options through to the generator", () => {
+    const code = "const a = 1;";
+    const withDefaults = generateCode(code, []);
+    assert(withDefaults.includes("const a=("));
+
+    const withoutCompact = generateCode(code, [], { compact: false });
+    assert(withoutCompact.includes("const a = ("));
   });
 });

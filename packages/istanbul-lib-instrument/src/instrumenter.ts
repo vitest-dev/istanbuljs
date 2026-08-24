@@ -3,13 +3,7 @@
  Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
  */
 import { transformSync } from "@babel/core";
-import type {
-  BabelFileResult,
-  NodePath,
-  PluginObj,
-  TransformOptions,
-  types as t,
-} from "@babel/core";
+import type { FileResult, InputOptions, NodePath, PluginObject, types as t } from "@babel/core";
 import type { ParserPlugin } from "@babel/parser";
 import { defaults } from "@istanbuljs/schema";
 
@@ -19,7 +13,7 @@ import programVisitor from "./visitor";
 import type { VisitorExitResult } from "./visitor";
 
 /** source map produced by babel's transform */
-type SourceMap = NonNullable<BabelFileResult["map"]>;
+type SourceMap = NonNullable<FileResult["map"]>;
 
 /** options accepted by {@link Instrumenter} and {@link createInstrumenter} */
 export interface InstrumenterOptions {
@@ -102,13 +96,13 @@ class Instrumenter {
     filename = filename || String(new Date().getTime()) + ".js";
     const { opts } = this;
     let output: VisitorExitResult | undefined;
-    const babelOpts: TransformOptions = {
+    const babelOpts: InputOptions = {
       configFile: false,
       babelrc: false,
       ast: true,
       filename: filename || String(new Date().getTime()) + ".js",
       // trace-mapping allows `sources: (string | null)[]`, babel's types don't — same runtime shape
-      inputSourceMap: inputSourceMap as TransformOptions["inputSourceMap"],
+      inputSourceMap: inputSourceMap as InputOptions["inputSourceMap"],
       sourceMaps: opts.produceSourceMap,
       compact: opts.compact,
       comments: opts.preserveComments,
@@ -119,30 +113,28 @@ class Instrumenter {
       },
       generatorOpts: opts.generatorOpts,
       plugins: [
-        [
-          ({ types }: { types: typeof t }): PluginObj => {
-            const ee = programVisitor(types, filename as string, {
-              coverageVariable: opts.coverageVariable,
-              reportLogic: opts.reportLogic,
-              coverageGlobalScope: opts.coverageGlobalScope,
-              coverageGlobalScopeFunc: opts.coverageGlobalScopeFunc,
-              ignoreClassMethods: opts.ignoreClassMethods,
-              ignoreLines: opts.ignoreLines,
-              inputSourceMap,
-            });
+        ({ types }: { types: typeof t }): PluginObject => {
+          const ee = programVisitor(types, filename as string, {
+            coverageVariable: opts.coverageVariable,
+            reportLogic: opts.reportLogic,
+            coverageGlobalScope: opts.coverageGlobalScope,
+            coverageGlobalScopeFunc: opts.coverageGlobalScopeFunc,
+            ignoreClassMethods: opts.ignoreClassMethods,
+            ignoreLines: opts.ignoreLines,
+            inputSourceMap,
+          });
 
-            return {
-              visitor: {
-                Program: {
-                  enter: ee.enter,
-                  exit(path: NodePath<t.Program>) {
-                    output = ee.exit(path);
-                  },
+          return {
+            visitor: {
+              Program: {
+                enter: ee.enter,
+                exit(path: NodePath<t.Program>) {
+                  output = ee.exit(path);
                 },
               },
-            };
-          },
-        ],
+            },
+          };
+        },
       ],
     };
 

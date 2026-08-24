@@ -77,7 +77,7 @@ export default function readInitialCoverage(code: string | t.Node): InitialCover
     if (!binding) {
       return null;
     }
-    const valuePath = binding.path.get("init");
+    const valuePath = binding.path.get("init") as NodePath;
     const value = valuePath.evaluate();
     if (!value.confident) {
       return null;

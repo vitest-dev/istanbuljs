@@ -523,7 +523,7 @@ function coverStatement(this: VisitState, path: NodePath) {
 function coverAssignmentPattern(this: VisitState, path: NodePath) {
   const n = path.node as t.AssignmentPattern;
   const b = this.cov.newBranch("default-arg", n.loc);
-  this.insertBranchCounter(path.get("right"), b);
+  this.insertBranchCounter(path.get("right") as NodePath, b);
 }
 
 function coverFunction(this: VisitState, path: NodePath) {
@@ -545,7 +545,7 @@ function makeBlock(this: VisitState, path: NodePath) {
   }
   if (!path.isBlockStatement()) {
     path.replaceWith(T.blockStatement([path.node as t.Statement]));
-    const node = path.node as t.BlockStatement;
+    const node = path.node as unknown as t.BlockStatement;
     node.loc = node.body[0].loc;
     node.body[0].leadingComments = node.leadingComments;
     node.leadingComments = undefined;
@@ -554,7 +554,7 @@ function makeBlock(this: VisitState, path: NodePath) {
 
 function blockProp(prop: string) {
   return function (this: VisitState, path: NodePath) {
-    makeBlock.call(this, path.get(prop));
+    makeBlock.call(this, path.get(prop) as NodePath);
   };
 }
 
@@ -567,7 +567,7 @@ function makeParenthesizedExpressionForNonIdentifier(this: VisitState, path: Nod
 
 function parenthesizedExpressionProp(prop: string) {
   return function (this: VisitState, path: NodePath) {
-    makeParenthesizedExpressionForNonIdentifier.call(this, path.get(prop));
+    makeParenthesizedExpressionForNonIdentifier.call(this, path.get(prop) as NodePath);
   };
 }
 
@@ -848,7 +848,7 @@ function programVisitor(
         }
       } else {
         gvTemplate = globalTemplateVariable({
-          GLOBAL_COVERAGE_SCOPE: visitorOpts.coverageGlobalScope,
+          GLOBAL_COVERAGE_SCOPE: template.expression.ast(visitorOpts.coverageGlobalScope),
         });
       }
       const cv = coverageTemplate({

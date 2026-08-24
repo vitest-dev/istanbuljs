@@ -28,9 +28,7 @@ describe("plugins", () => {
 
     describe("with decorator plugin", () => {
       it("should success", () => {
-        const generated = generateCode(codeNeedDecoratorPlugin, [
-          ["decorators", { decoratorsBeforeExport: false }],
-        ]);
+        const generated = generateCode(codeNeedDecoratorPlugin, ["decorators"]);
         assert(generated);
         expect(generated).toBeTypeOf("string");
       });

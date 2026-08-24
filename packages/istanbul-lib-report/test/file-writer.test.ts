@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { describe, it, assert, beforeEach, afterEach } from "vitest";
+import { describe, it, assert, beforeEach, afterEach, afterAll, vi } from "vitest";
 
-import FileWriter from "../src/file-writer";
+import FileWriter, { supportsColor } from "../src/file-writer";
 
 const dataDir = path.resolve(import.meta.dirname, ".data");
 
@@ -80,5 +80,48 @@ describe("file-writer", () => {
     assert.throws(() => {
       writer.writerForDir(import.meta.dirname);
     });
+  });
+});
+
+describe("supportsColor", () => {
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
+  const tty = { isTTY: true, hasColors: () => true } as unknown as NodeJS.WriteStream;
+  const pipe = { isTTY: false } as unknown as NodeJS.WriteStream;
+
+  it("uses colors for a tty that supports them", () => {
+    assert.isTrue(supportsColor(tty, {}));
+    assert.isFalse(supportsColor({ ...tty, hasColors: () => false } as NodeJS.WriteStream, {}));
+  });
+
+  it("does not use colors when the stream is not a tty", () => {
+    assert.isFalse(supportsColor(pipe, {}));
+  });
+
+  it("honors FORCE_COLOR even when the stream is not a tty", () => {
+    assert.isTrue(supportsColor(pipe, { FORCE_COLOR: "1" }));
+    assert.isTrue(supportsColor(pipe, { FORCE_COLOR: "" }));
+    assert.isTrue(supportsColor(pipe, { FORCE_COLOR: "true" }));
+    assert.isFalse(supportsColor(tty, { FORCE_COLOR: "0" }));
+    assert.isFalse(supportsColor(tty, { FORCE_COLOR: "false" }));
+  });
+
+  it("honors NO_COLOR and NODE_DISABLE_COLORS", () => {
+    assert.isFalse(supportsColor(tty, { NO_COLOR: "1" }));
+    assert.isFalse(supportsColor(tty, { NO_COLOR: "" }));
+    assert.isFalse(supportsColor(tty, { NODE_DISABLE_COLORS: "1" }));
+    // FORCE_COLOR takes precedence
+    assert.isTrue(supportsColor(pipe, { NO_COLOR: "1", FORCE_COLOR: "1" }));
+  });
+
+  it("colorizes console output according to FORCE_COLOR", () => {
+    const cw = new FileWriter("/").writeFile("-");
+    vi.stubEnv("FORCE_COLOR", "1");
+    assert.equal(cw.colorize("foo", "low"), "\u001b[31;1mfoo\u001b[0m");
+    assert.equal(cw.colorize("foo", "unknown"), "foo");
+    vi.stubEnv("FORCE_COLOR", "0");
+    assert.equal(cw.colorize("foo", "low"), "foo");
   });
 });

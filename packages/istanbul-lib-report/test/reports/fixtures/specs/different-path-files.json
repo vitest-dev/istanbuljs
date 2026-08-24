@@ -20,6 +20,7 @@
         "total": 0,
         "covered": 0,
         "skipped": 0,
+        "missed": 0,
         "pct": 0,
         "classForPercent": "empty"
       },
@@ -27,6 +28,7 @@
         "total": 0,
         "covered": 0,
         "skipped": 0,
+        "missed": 0,
         "pct": 0,
         "classForPercent": "empty"
       },
@@ -34,6 +36,7 @@
         "total": 0,
         "covered": 0,
         "skipped": 0,
+        "missed": 0,
         "pct": 0,
         "classForPercent": "empty"
       },
@@ -41,6 +44,7 @@
         "total": 0,
         "covered": 0,
         "skipped": 0,
+        "missed": 0,
         "pct": 0,
         "classForPercent": "empty"
       }
@@ -54,6 +58,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           },
@@ -61,6 +66,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           },
@@ -68,6 +74,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           },
@@ -75,6 +82,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           }
@@ -88,6 +96,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               },
@@ -95,6 +104,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               },
@@ -102,6 +112,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               },
@@ -109,6 +120,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               }
@@ -123,6 +135,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               },
@@ -130,6 +143,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               },
@@ -137,6 +151,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               },
@@ -144,6 +159,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               }
@@ -157,6 +173,7 @@
                     "total": 0,
                     "covered": 0,
                     "skipped": 0,
+                    "missed": 0,
                     "pct": 0,
                     "classForPercent": "empty"
                   },
@@ -164,6 +181,7 @@
                     "total": 0,
                     "covered": 0,
                     "skipped": 0,
+                    "missed": 0,
                     "pct": 0,
                     "classForPercent": "empty"
                   },
@@ -171,6 +189,7 @@
                     "total": 0,
                     "covered": 0,
                     "skipped": 0,
+                    "missed": 0,
                     "pct": 0,
                     "classForPercent": "empty"
                   },
@@ -178,6 +197,7 @@
                     "total": 0,
                     "covered": 0,
                     "skipped": 0,
+                    "missed": 0,
                     "pct": 0,
                     "classForPercent": "empty"
                   }
@@ -196,6 +216,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           },
@@ -203,6 +224,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           },
@@ -210,6 +232,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           },
@@ -217,6 +240,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           }
@@ -230,6 +254,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               },
@@ -237,6 +262,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               },
@@ -244,6 +270,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               },
@@ -251,6 +278,7 @@
                 "total": 0,
                 "covered": 0,
                 "skipped": 0,
+                "missed": 0,
                 "pct": 0,
                 "classForPercent": "empty"
               }
@@ -267,6 +295,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           },
@@ -274,6 +303,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           },
@@ -281,6 +311,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           },
@@ -288,6 +319,7 @@
             "total": 0,
             "covered": 0,
             "skipped": 0,
+            "missed": 0,
             "pct": 0,
             "classForPercent": "empty"
           }

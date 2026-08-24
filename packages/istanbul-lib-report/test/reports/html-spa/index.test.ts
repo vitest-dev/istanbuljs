@@ -99,10 +99,10 @@ describe("html-spa", () => {
             header: "/* eslint-disable */\n",
           },
           {
+            type: "copy",
+            source: path.join(import.meta.dirname, "../../../src/reports/html/assets/favicon.png"),
             dest: "./favicon.png",
             header: undefined,
-            source: path.join(import.meta.dirname, "/../../src/html/assets/favicon.png"),
-            type: "copy",
           },
           {
             type: "copy",

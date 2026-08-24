@@ -115,8 +115,11 @@ class CoberturaReport extends ReportBase {
 
     this.xml!.openTag("methods");
     const fnMap = fileCoverage.fnMap;
-    Object.entries(fnMap).forEach(([k, { name, decl }]) => {
+    Object.entries(fnMap).forEach(([k, { name, decl, loc }]) => {
       const hits = fileCoverage.f[k];
+      // Some versions of the instrumenter in the wild populate 'loc'
+      // but not 'decl':
+      const start = (decl || loc).start;
       this.xml!.openTag("method", {
         name: escape(name),
         hits,
@@ -125,7 +128,7 @@ class CoberturaReport extends ReportBase {
       this.xml!.openTag("lines");
       //Add the function definition line and hits so that jenkins cobertura plugin records method hits
       this.xml!.inlineTag("line", {
-        number: decl.start.line,
+        number: start.line,
         hits,
       });
       this.xml!.closeTag("lines");

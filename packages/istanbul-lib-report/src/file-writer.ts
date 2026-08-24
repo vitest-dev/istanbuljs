@@ -94,12 +94,36 @@ class ConsoleWriter extends ContentWriter {
       high: "32;1",
     };
 
-    /* istanbul ignore next: different modes for CI and local */
-    if (process.stdout.isTTY && process.stdout.hasColors() && colors[clazz as string]) {
+    if (colors[clazz as string] && supportsColor()) {
       return `\u001b[${colors[clazz as string]}m${str}\u001b[0m`;
     }
     return str;
   }
+}
+
+/**
+ * Whether ANSI colour codes should be emitted on `stream`. Mirrors the
+ * `supports-color` semantics upstream istanbul relied on:
+ *
+ * - `FORCE_COLOR` wins over everything: `0`/`false` disables colours, any
+ *   other value (including an empty string) enables them even when the
+ *   stream is not a TTY, e.g. when a CI runner pipes the output.
+ * - `NO_COLOR` or `NODE_DISABLE_COLORS` being set disables colours.
+ * - Otherwise colours are used only for a TTY that reports colour support.
+ */
+export function supportsColor(
+  stream: NodeJS.WriteStream = process.stdout,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  const force = env.FORCE_COLOR;
+  if (force !== undefined) {
+    return force !== "0" && force !== "false";
+  }
+  if (env.NO_COLOR !== undefined || env.NODE_DISABLE_COLORS !== undefined) {
+    return false;
+  }
+  /* istanbul ignore next: depends on whether the test runner's stdout is a TTY */
+  return Boolean(stream.isTTY && stream.hasColors?.());
 }
 
 /**

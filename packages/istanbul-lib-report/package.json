@@ -34,9 +34,7 @@
     "build:spa:watch": "webpack --config src/reports/html-spa/webpack.config.cjs --watch --mode development"
   },
   "dependencies": {
-    "@vitest/istanbul-lib-coverage": "workspace:*",
-    "html-escaper": "catalog:",
-    "supports-color": "catalog:"
+    "@vitest/istanbul-lib-coverage": "workspace:*"
   },
   "devDependencies": {
     "@babel/core": "catalog:",

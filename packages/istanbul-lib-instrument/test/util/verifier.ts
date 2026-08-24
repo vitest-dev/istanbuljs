@@ -1,5 +1,4 @@
 import { classes } from "@vitest/istanbul-lib-coverage";
-import clone from "clone";
 import { assert } from "vitest";
 
 import type { InputSourceMap, InstrumenterOptions } from "../../src/index";
@@ -76,7 +75,7 @@ class Verifier {
 
   async verify(args: unknown[], expectedOutput: unknown, expectedCoverage: any): Promise<void> {
     assert.ok(!this.result.err, ((this.result.err || {}) as Error).message);
-    getGlobalObject()[this.result.coverageVariable] = clone(this.result.baseline);
+    getGlobalObject()[this.result.coverageVariable] = structuredClone(this.result.baseline);
     const actualOutput = await this.result.fn(args);
     const cov = this.getFileCoverage();
 
@@ -199,7 +198,7 @@ function create(
     code,
     generatedCode: instrumenterOutput,
     coverageVariable,
-    baseline: clone(g[coverageVariable]),
+    baseline: structuredClone(g[coverageVariable]),
     emptyCoverage: instrumenter.lastFileCoverage(),
   });
 }

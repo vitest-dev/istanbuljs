@@ -35,15 +35,10 @@
     "@babel/parser": "catalog:",
     "@istanbuljs/schema": "catalog:",
     "@jridgewell/trace-mapping": "catalog:",
-    "@vitest/istanbul-lib-coverage": "workspace:*",
-    "semver": "catalog:"
+    "@vitest/istanbul-lib-coverage": "workspace:*"
   },
   "devDependencies": {
-    "@babel/cli": "catalog:",
     "@types/babel__core": "catalog:",
-    "clone": "catalog:",
-    "documentation": "catalog:",
-    "nopt": "catalog:",
     "tsdown": "catalog:",
     "yaml": "catalog:"
   },

@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import clone from "clone";
 import { assert, describe, it, expect } from "vitest";
 import { parseAllDocuments } from "yaml";
 
@@ -85,7 +84,7 @@ function generateTests(docs: any[]) {
               doc.instrumentOpts,
               doc.inputSourceMap,
             );
-            const test = clone(t);
+            const test = structuredClone(t);
             const args = test.args;
             const out = test.out;
             delete test.args;

@@ -6,8 +6,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 import type { CoverageSummary, Totals } from "@vitest/istanbul-lib-coverage";
-import * as html from "html-escaper";
 
+import * as html from "../../html-escape";
 import type { Context, FileWriter, ReportNode } from "../../index";
 import ReportBase from "../../report-base";
 import annotator from "./annotator";

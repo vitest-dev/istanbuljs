@@ -5,8 +5,8 @@
 import path from "node:path";
 
 import type { Totals } from "@vitest/istanbul-lib-coverage";
-import { escape } from "html-escaper";
 
+import { escape } from "../../html-escape";
 import type { ContentWriter, Context, ReportNode, XmlAttributes, XMLWriter } from "../../index";
 import ReportBase from "../../report-base";
 

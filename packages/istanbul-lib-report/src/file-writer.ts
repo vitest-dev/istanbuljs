@@ -6,8 +6,6 @@ Copyrights licensed under the New BSD License. See the accompanying LICENSE file
 import fs from "node:fs";
 import path from "node:path";
 
-import supportsColor from "supports-color";
-
 /**
  * Base class for writing content
  * @class ContentWriter
@@ -97,7 +95,7 @@ class ConsoleWriter extends ContentWriter {
     };
 
     /* istanbul ignore next: different modes for CI and local */
-    if (supportsColor.stdout && colors[clazz as string]) {
+    if (process.stdout.isTTY && process.stdout.hasColors() && colors[clazz as string]) {
       return `\u001b[${colors[clazz as string]}m${str}\u001b[0m`;
     }
     return str;

@@ -27,6 +27,9 @@
   "type": "module",
   "types": "./dist/index.d.mts",
   "exports": "./dist/index.mjs",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
     "test": "pnpm --filter @vitest/istanbuljs-monorepo run test --project @vitest/istanbul-lib-report"

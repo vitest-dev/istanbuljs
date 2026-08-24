@@ -44,6 +44,13 @@ jobs:
       - name: Install
         run: pnpm install
 
+      - name: Build
+        run: pnpm build
+
+      - name: Preview Release
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 22
+        run: pnpx pkg-pr-new publish --compact --commentWithSha --no-template --pnpm './packages/*'
+
       - name: Format
         run: pnpm fmt --check
 
@@ -53,10 +60,5 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Build
-        run: pnpm build
-
       - name: Test
         run: pnpm test
-        env:
-          MOCHA_THROW_DEPRECATION: false

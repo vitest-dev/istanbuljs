@@ -274,7 +274,7 @@ class FileCoverage {
     }
     if (typeof pathOrObj === "string") {
       this.data = emptyCoverage(pathOrObj, reportLogic);
-    } else if (pathOrObj instanceof FileCoverage) {
+    } else if (isFileCoverage(pathOrObj)) {
       this.data = pathOrObj.data;
     } else if (typeof pathOrObj === "object") {
       this.data = pathOrObj;
@@ -495,6 +495,20 @@ dataProperties(FileCoverage, [
   "bT",
   "all",
 ]);
+
+export function isFileCoverage(obj: unknown): obj is FileCoverage {
+  if (obj instanceof FileCoverage) {
+    return true;
+  }
+
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    typeof (obj as FileCoverage).data === "object" &&
+    typeof (obj as FileCoverage).toSummary === "function" &&
+    typeof (obj as FileCoverage).getLineCoverage === "function"
+  );
+}
 
 export {
   FileCoverage,

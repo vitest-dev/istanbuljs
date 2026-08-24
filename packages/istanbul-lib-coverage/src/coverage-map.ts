@@ -16,12 +16,18 @@ export interface CoverageMapData {
   [path: string]: FileCoverage | FileCoverageData;
 }
 
-function maybeConstruct<A, T>(obj: A | T, klass: new (obj: A) => T): T {
-  if (obj instanceof klass) {
-    return obj;
+export function isCoverageMap(obj: unknown): obj is CoverageMap {
+  if (obj instanceof CoverageMap) {
+    return true;
   }
 
-  return new klass(obj as A);
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    typeof (obj as CoverageMap).data === "object" &&
+    typeof (obj as CoverageMap).fileCoverageFor === "function" &&
+    typeof (obj as CoverageMap).addFileCoverage === "function"
+  );
 }
 
 function loadMap(source?: CoverageMapData): Record<string, FileCoverage> {
@@ -31,7 +37,7 @@ function loadMap(source?: CoverageMapData): Record<string, FileCoverage> {
   }
 
   Object.entries(source).forEach(([k, cov]) => {
-    data[k] = maybeConstruct(cov, FileCoverage);
+    data[k] = cov instanceof FileCoverage ? cov : new FileCoverage(cov);
   });
 
   return data;
@@ -49,6 +55,8 @@ class CoverageMap {
   constructor(obj?: CoverageMap | CoverageMapData) {
     if (obj instanceof CoverageMap) {
       this.data = obj.data;
+    } else if (isCoverageMap(obj)) {
+      this.data = loadMap(obj.data);
     } else {
       this.data = loadMap(obj);
     }
@@ -61,7 +69,7 @@ class CoverageMap {
    *  as needed.
    */
   merge(obj: CoverageMap | CoverageMapData): void {
-    const other = maybeConstruct(obj, CoverageMap);
+    const other = obj instanceof CoverageMap ? obj : new CoverageMap(obj);
     Object.values(other.data).forEach((fc) => {
       this.addFileCoverage(fc);
     });

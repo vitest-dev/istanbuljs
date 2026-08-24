@@ -79,7 +79,7 @@ class CoverageSummary {
   constructor(obj?: CoverageSummary | CoverageSummaryData) {
     if (!obj) {
       this.data = blankSummary();
-    } else if (obj instanceof CoverageSummary) {
+    } else if (isCoverageSummary(obj)) {
       this.data = obj.data;
     } else {
       this.data = obj;
@@ -124,5 +124,19 @@ class CoverageSummary {
 }
 
 dataProperties(CoverageSummary, ["lines", "statements", "functions", "branches", "branchesTrue"]);
+
+export function isCoverageSummary(obj: unknown): obj is CoverageSummary {
+  if (obj instanceof CoverageSummary) {
+    return true;
+  }
+
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    typeof (obj as CoverageSummary).data === "object" &&
+    typeof (obj as CoverageSummary).isEmpty === "function" &&
+    typeof (obj as CoverageSummary).merge === "function"
+  );
+}
 
 export { CoverageSummary };

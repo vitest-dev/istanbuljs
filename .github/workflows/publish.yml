@@ -26,6 +26,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history so changelogithub can resolve the previous release tag
+          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
@@ -63,7 +66,8 @@ jobs:
           pnpm version -r ${{ inputs.release-type }}
           VERSION=$(node -p "require('./package.json').version")
           git commit -am "chore: release v$VERSION"
-          git tag "v$VERSION"
+          # Annotated tag: `git push --follow-tags` ignores lightweight tags
+          git tag -a "v$VERSION" -m "v$VERSION"
 
       - name: Publish to npm
         run: pnpm publish -r

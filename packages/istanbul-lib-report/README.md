@@ -39,3 +39,27 @@ const report = libReport.create("json", {
 // call execute to synchronously create and write the report to disk
 report.execute(context);
 ```
+
+### Custom reporters
+
+`create()` only knows the built-in reporters. To load a custom reporter use`createAsync()`, which accepts a built-in name, a package name, an absolute path or a `file://` URL.
+The module's default export (ESM) or `module.exports` (CommonJS) must be the report class:
+
+```js
+import { createAsync, ReportBase } from "@vitest/istanbul-lib-report";
+
+// my-report.mjs
+export default class MyReport extends ReportBase {
+  onStart(root, context) {
+    this.writer = context.writer.writeFile("my-report.txt");
+  }
+  onEnd() {
+    this.writer.close();
+  }
+}
+
+const report = await createAsync("/absolute/path/to/my-report.mjs", {
+  summarizer: "nested",
+});
+report.execute(context);
+```

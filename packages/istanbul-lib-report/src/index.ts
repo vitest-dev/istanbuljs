@@ -7,7 +7,8 @@
  * @module Exports
  */
 
-import { createRequire } from "node:module";
+import { isAbsolute } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import Context from "./context";
 import type { ContextOptions } from "./context";
@@ -128,19 +129,67 @@ export interface ReportOptions {
 /** names of the built-in reports */
 export type ReportType = keyof ReportOptions;
 
+type ReportConstructor = new (cfg: object) => ReportBase;
+
+function getBuiltinReport(name: string): ReportConstructor | undefined {
+  return Object.hasOwn(reports, name)
+    ? (reports as Record<string, ReportConstructor>)[name]
+    : undefined;
+}
+
+function unwrapDefault(mod: unknown): unknown {
+  return typeof mod === "object" && mod !== null && "default" in mod ? mod.default : mod;
+}
+
+/**
+ * creates an instance of a built-in report.
+ * @param name the report name, e.g. `html`, `json`, `text`
+ * @param cfg options for the report
+ */
 export function create<T extends ReportType>(
   name: T,
   cfg?: Partial<ReportOptions[T]>,
-): InstanceType<(typeof reports)[T]>;
-export function create(name: string, cfg?: object): ReportBase;
-export function create(name: string, cfg?: object): ReportBase {
-  cfg = cfg || {};
-  let Cons = (reports as Record<string, unknown>)[name] as new (cfg: object) => ReportBase;
+): InstanceType<(typeof reports)[T]> {
+  const Cons = getBuiltinReport(name);
+  if (!Cons) {
+    throw new Error(`Unknown report "${name}". Use createAsync() to load custom reports.`);
+  }
+  return new Cons(cfg ?? {}) as InstanceType<(typeof reports)[T]>;
+}
+
+/**
+ * creates an instance of a built-in or custom report.
+ *
+ * Custom reports are loaded with `import()`, so `name` may be a package name,
+ * an absolute path or a `file://` URL of an ES module or CommonJS module whose
+ * default export (or `module.exports`) is the report class.
+ * @param name the report name, package name or path
+ * @param cfg options for the report
+ */
+export async function createAsync<T extends ReportType>(
+  name: T,
+  cfg?: Partial<ReportOptions[T]>,
+): Promise<InstanceType<(typeof reports)[T]>>;
+export async function createAsync(name: string, cfg?: object): Promise<ReportBase>;
+export async function createAsync(name: string, cfg?: object): Promise<ReportBase> {
+  let Cons = getBuiltinReport(name);
 
   if (!Cons) {
-    // TODO Verify custom reporters load here fine
-    Cons = createRequire(import.meta.url)(name);
+    const specifier = isAbsolute(name) ? pathToFileURL(name).href : name;
+    const mod: unknown = await import(specifier);
+
+    Cons = unwrapDefault(mod) as ReportConstructor;
+    // CommonJS transpiled from ESM: `module.exports = { __esModule: true, default: … }`
+    if (typeof Cons === "object" && Cons !== null && "__esModule" in Cons) {
+      Cons = unwrapDefault(Cons) as ReportConstructor;
+    }
+
+    if (typeof Cons !== "function") {
+      throw new TypeError(
+        `Custom report "${name}" must export a report class as its default export (ESM) or module.exports (CommonJS)`,
+      );
+    }
   }
 
-  return new Cons(cfg);
+  return new Cons!(cfg ?? {});
 }

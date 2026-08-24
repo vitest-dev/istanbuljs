@@ -42,11 +42,10 @@
     "@babel/cli": "catalog:",
     "@types/babel__core": "catalog:",
     "clone": "catalog:",
-    "debug": "catalog:",
     "documentation": "catalog:",
-    "js-yaml": "catalog:",
     "nopt": "catalog:",
-    "tsdown": "catalog:"
+    "tsdown": "catalog:",
+    "yaml": "catalog:"
   },
   "engines": {
     "node": ">=22"

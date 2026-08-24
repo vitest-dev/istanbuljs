@@ -8,7 +8,7 @@ import path from "node:path";
 import { TraceMap, sourceContentFor } from "@jridgewell/trace-mapping";
 import type { EncodedSourceMap } from "@jridgewell/trace-mapping";
 import type { CoverageMap, FileCoverageData } from "@vitest/istanbul-lib-coverage";
-import createDebug from "debug";
+import { createDebug } from "obug";
 
 import * as pathutils from "./pathutils";
 import { SourceMapTransformer } from "./transformer";

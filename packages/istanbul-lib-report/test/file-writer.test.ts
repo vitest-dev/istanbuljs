@@ -1,8 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import mkdirp from "make-dir";
-import rimraf from "rimraf";
 import { describe, it, assert, beforeEach, afterEach } from "vitest";
 
 import FileWriter from "../src/file-writer";
@@ -13,12 +11,12 @@ describe("file-writer", () => {
   let writer: FileWriter;
 
   beforeEach(() => {
-    mkdirp.sync(dataDir);
+    fs.mkdirSync(dataDir, { recursive: true });
     writer = new FileWriter(dataDir);
   });
 
   afterEach(() => {
-    rimraf.sync(dataDir);
+    fs.rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("returns a content writer for file", () => {

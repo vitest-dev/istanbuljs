@@ -36,7 +36,6 @@
   "dependencies": {
     "@vitest/istanbul-lib-coverage": "workspace:*",
     "html-escaper": "catalog:",
-    "make-dir": "catalog:",
     "supports-color": "catalog:"
   },
   "devDependencies": {
@@ -44,10 +43,8 @@
     "@babel/preset-env": "catalog:",
     "@babel/preset-react": "catalog:",
     "babel-loader": "catalog:",
-    "is-windows": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "rimraf": "catalog:",
     "tsdown": "catalog:",
     "webpack": "catalog:",
     "webpack-cli": "catalog:"

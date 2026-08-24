@@ -3,7 +3,6 @@ import { createRequire } from "node:module";
 import path from "node:path";
 
 import * as istanbulLibCoverage from "@vitest/istanbul-lib-coverage";
-import isWindows from "is-windows";
 import { afterAll as after, beforeAll as before, beforeEach, describe, it, should } from "vitest";
 
 import * as istanbulLibReport from "../../../src/index";
@@ -28,7 +27,7 @@ describe("LcovOnlyReport", () => {
   function createTest(file: string) {
     const fixture = require(path.resolve(import.meta.dirname, "../fixtures/specs/" + file));
     it(fixture.title, function (this: { skip(): void }) {
-      if (isWindows()) {
+      if (process.platform === "win32") {
         // appveyor does not render console color.
         return this.skip();
       }

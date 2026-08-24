@@ -2,8 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 import clone from "clone";
-import yaml from "js-yaml";
 import { assert, describe, it, expect } from "vitest";
+import { parseAllDocuments } from "yaml";
 
 import * as guards from "./util/guards";
 import * as verifier from "./util/verifier";
@@ -29,10 +29,14 @@ function loadDocs() {
     const filePath = path.resolve(dir, f);
     const contents = fs.readFileSync(filePath, "utf8");
     try {
-      yaml.safeLoadAll(contents, (obj) => {
+      for (const doc of parseAllDocuments(contents)) {
+        if (doc.errors.length > 0) {
+          throw doc.errors[0];
+        }
+        const obj = doc.toJS();
         obj.file = f;
         docs.push(obj);
-      });
+      }
     } catch (ex: any) {
       docs.push({
         file: f,

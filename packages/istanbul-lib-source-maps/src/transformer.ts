@@ -5,7 +5,7 @@
 import type { TraceMap } from "@jridgewell/trace-mapping";
 import * as libCoverage from "@vitest/istanbul-lib-coverage";
 import type { CoverageMap, FileCoverage, Location, Range } from "@vitest/istanbul-lib-coverage";
-import createDebug from "debug";
+import { createDebug } from "obug";
 
 import getMapping from "./get-mapping";
 import type { Mapping } from "./get-mapping";

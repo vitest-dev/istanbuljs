@@ -36,24 +36,12 @@ catalogs:
     '@types/clone':
       specifier: ^2.1.4
       version: 2.1.4
-    '@types/debug':
-      specifier: ^4.1.13
-      version: 4.1.13
     '@types/html-escaper':
       specifier: ^3.0.4
       version: 3.0.4
-    '@types/is-windows':
-      specifier: ^1.0.2
-      version: 1.0.2
-    '@types/js-yaml':
-      specifier: ^3.12.10
-      version: 3.12.10
     '@types/node':
       specifier: ^26.2.0
       version: 26.2.0
-    '@types/rimraf':
-      specifier: ^3.0.2
-      version: 3.0.2
     '@types/semver':
       specifier: ^7.8.0
       version: 7.8.0
@@ -66,27 +54,18 @@ catalogs:
     clone:
       specifier: ^2.1.2
       version: 2.1.2
-    debug:
-      specifier: ^4.1.1
-      version: 4.4.3
     documentation:
       specifier: ^12.1.4
       version: 12.3.0
     html-escaper:
       specifier: ^2.0.0
       version: 2.0.2
-    is-windows:
-      specifier: ^1.0.2
-      version: 1.0.2
-    js-yaml:
-      specifier: ^3.13.1
-      version: 3.15.1
-    make-dir:
-      specifier: ^4.0.0
-      version: 4.0.0
     nopt:
       specifier: ^4.0.1
       version: 4.0.3
+    obug:
+      specifier: ^2.1.4
+      version: 2.1.4
     oxfmt:
       specifier: ^0.64.0
       version: 0.64.0
@@ -99,9 +78,6 @@ catalogs:
     react-dom:
       specifier: ^16.12.0
       version: 16.14.0
-    rimraf:
-      specifier: ^3.0.0
-      version: 3.0.2
     semver:
       specifier: ^7.5.4
       version: 7.8.5
@@ -123,6 +99,9 @@ catalogs:
     webpack-cli:
       specifier: ^3.3.10
       version: 3.3.12
+    yaml:
+      specifier: ^2.9.0
+      version: 2.9.0
 
 importers:
 
@@ -134,24 +113,12 @@ importers:
       '@types/clone':
         specifier: 'catalog:'
         version: 2.1.4
-      '@types/debug':
-        specifier: 'catalog:'
-        version: 4.1.13
       '@types/html-escaper':
         specifier: 'catalog:'
         version: 3.0.4
-      '@types/is-windows':
-        specifier: 'catalog:'
-        version: 1.0.2
-      '@types/js-yaml':
-        specifier: 'catalog:'
-        version: 3.12.10
       '@types/node':
         specifier: 'catalog:'
         version: 26.2.0
-      '@types/rimraf':
-        specifier: 'catalog:'
-        version: 3.0.2
       '@types/semver':
         specifier: 'catalog:'
         version: 7.8.0
@@ -169,7 +136,7 @@ importers:
         version: 7.0.2
       vitest:
         specifier: 'catalog:'
-        version: 4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.2.0))
+        version: 4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.2.0)(yaml@2.9.0))
 
   packages/istanbul-lib-coverage:
     devDependencies:
@@ -207,21 +174,18 @@ importers:
       clone:
         specifier: 'catalog:'
         version: 2.1.2
-      debug:
-        specifier: 'catalog:'
-        version: 4.4.3(supports-color@7.2.0)
       documentation:
         specifier: 'catalog:'
         version: 12.3.0(supports-color@7.2.0)
-      js-yaml:
-        specifier: 'catalog:'
-        version: 3.15.1
       nopt:
         specifier: 'catalog:'
         version: 4.0.3
       tsdown:
         specifier: 'catalog:'
         version: 0.22.14(typescript@7.0.2)
+      yaml:
+        specifier: 'catalog:'
+        version: 2.9.0
 
   packages/istanbul-lib-report:
     dependencies:
@@ -231,9 +195,6 @@ importers:
       html-escaper:
         specifier: 'catalog:'
         version: 2.0.2
-      make-dir:
-        specifier: 'catalog:'
-        version: 4.0.0
       supports-color:
         specifier: 'catalog:'
         version: 7.2.0
@@ -250,18 +211,12 @@ importers:
       babel-loader:
         specifier: 'catalog:'
         version: 8.4.1(@babel/core@7.29.7(supports-color@7.2.0))(webpack@4.47.0)
-      is-windows:
-        specifier: 'catalog:'
-        version: 1.0.2
       react:
         specifier: 'catalog:'
         version: 16.14.0
       react-dom:
         specifier: 'catalog:'
         version: 16.14.0(react@16.14.0)
-      rimraf:
-        specifier: 'catalog:'
-        version: 3.0.2
       tsdown:
         specifier: 'catalog:'
         version: 0.22.14(typescript@7.0.2)
@@ -280,9 +235,9 @@ importers:
       '@vitest/istanbul-lib-coverage':
         specifier: workspace:*
         version: link:../istanbul-lib-coverage
-      debug:
+      obug:
         specifier: 'catalog:'
-        version: 4.4.3(supports-color@7.2.0)
+        version: 2.1.4
     devDependencies:
       tsdown:
         specifier: 'catalog:'
@@ -1414,39 +1369,20 @@ packages:
   '@types/clone@2.1.4':
     resolution: {integrity: sha512-NKRWaEGaVGVLnGLB2GazvDaZnyweW9FJLLFL5LhywGJB3aqGMT9R/EUoJoSRP4nzofYnZysuDmrEJtJdAqUOtQ==}
 
-  '@types/debug@4.1.13':
-    resolution: {integrity: sha512-KSVgmQmzMwPlmtljOomayoR89W4FynCAi3E8PPs7vmDVPe84hT+vGPKkJfThkmXs0x0jAaa9U8uW8bbfyS2fWw==}
-
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
-  '@types/glob@9.0.0':
-    resolution: {integrity: sha512-00UxlRaIUvYm4R4W9WYkN8/J+kV8fmOQ7okeH6YFtGWFMt3odD45tpG5yA5wnL7HE6lLgjaTW5n14ju2hl2NNA==}
-    deprecated: This is a stub types definition. glob provides its own type definitions, so you do not need this installed.
-
   '@types/html-escaper@3.0.4':
     resolution: {integrity: sha512-UKSaMPMXXKnq1jDj74seVikfdq5pWvoXcIgOUbwYzHuAEGiv8/juom1i/MsWBF8boFSI0uHQCSZauzr5OYnnJA==}
-
-  '@types/is-windows@1.0.2':
-    resolution: {integrity: sha512-Qt86FJkakTwcZR+r08JSrOtw1g05EhZwSKRu9S5tu8pXulFRl06KS2fYAoxE32fc3gVXkpwlYIxUkjFIusvyFQ==}
-
-  '@types/js-yaml@3.12.10':
-    resolution: {integrity: sha512-/Mtaq/wf+HxXpvhzFYzrzCqNRcA958sW++7JOFC8nPrZcvfi/TrzOaaGbvt27ltJB2NQbHVAg5a1wUCsyMH7NA==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/ms@2.1.0':
-    resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
-
   '@types/node@26.2.0':
     resolution: {integrity: sha512-5IviulTZeRNp2vAJ514cc/HUlY5nZ9fCbq9DMyC52BrhFZACo3nI0R7qBxhQmo/d27NFe96ur/b7Wwxklda+kg==}
-
-  '@types/rimraf@3.0.2':
-    resolution: {integrity: sha512-F3OznnSLAUxFrCEu/L5PY8+ny8DtcFRjx7fZZ9bycvXRi3KPTRS9HOitGZwvPg0juRhXFWIeKX58cnX5YqLohQ==}
 
   '@types/semver@7.8.0':
     resolution: {integrity: sha512-1mAINjtQCXXeLkJ9ehXkwOcBpqtLxiVtKhpUf83DdRNdQKV0iXZpaHYqRr7nj+wvxuJzoAmAwXI+sCNMv1CzLQ==}
@@ -3853,11 +3789,6 @@ packages:
     deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
 
-  rimraf@3.0.2:
-    resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
-    deprecated: Rimraf versions prior to v4 are no longer supported
-    hasBin: true
-
   ripemd160@2.0.3:
     resolution: {integrity: sha512-5Di9UC0+8h1L6ZD2d7awM7E/T4uA1fJRlx6zk/NvdCCVEoAnFqvHmCuNeIKoCeIixBX/q8uM+6ycDvF8woqosA==}
     engines: {node: '>= 0.8'}
@@ -4644,6 +4575,11 @@ packages:
 
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
+
+  yaml@2.9.0:
+    resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
 
   yargs-parser@11.1.1:
     resolution: {integrity: sha512-C6kB/WJDiaxONLJQnF8ccx9SEeoTTLek8RVbaOIsrAUS8VrBEXfmeSnCZxygc+XC2sNMBIwOOnfcxiynjHsVSQ==}
@@ -5792,36 +5728,17 @@ snapshots:
 
   '@types/clone@2.1.4': {}
 
-  '@types/debug@4.1.13':
-    dependencies:
-      '@types/ms': 2.1.0
-
   '@types/deep-eql@4.0.2': {}
 
   '@types/estree@1.0.9': {}
 
-  '@types/glob@9.0.0':
-    dependencies:
-      glob: 7.2.3
-
   '@types/html-escaper@3.0.4': {}
 
-  '@types/is-windows@1.0.2': {}
-
-  '@types/js-yaml@3.12.10': {}
-
   '@types/json-schema@7.0.15': {}
-
-  '@types/ms@2.1.0': {}
 
   '@types/node@26.2.0':
     dependencies:
       undici-types: 8.3.0
-
-  '@types/rimraf@3.0.2':
-    dependencies:
-      '@types/glob': 9.0.0
-      '@types/node': 26.2.0
 
   '@types/semver@7.8.0': {}
 
@@ -5899,7 +5816,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.2.0))
+      vitest: 4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.2.0)(yaml@2.9.0))
 
   '@vitest/expect@4.1.11':
     dependencies:
@@ -5910,13 +5827,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.1
 
-  '@vitest/mocker@4.1.11(vite@8.2.2(@types/node@26.2.0))':
+  '@vitest/mocker@4.1.11(vite@8.2.2(@types/node@26.2.0)(yaml@2.9.0))':
     dependencies:
       '@vitest/spy': 4.1.11
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.2.2(@types/node@26.2.0)
+      vite: 8.2.2(@types/node@26.2.0)(yaml@2.9.0)
 
   '@vitest/pretty-format@4.1.11':
     dependencies:
@@ -8509,10 +8426,6 @@ snapshots:
     dependencies:
       glob: 7.2.3
 
-  rimraf@3.0.2:
-    dependencies:
-      glob: 7.2.3
-
   ripemd160@2.0.3:
     dependencies:
       hash-base: 3.1.2
@@ -9250,7 +9163,7 @@ snapshots:
       remove-trailing-separator: 1.1.0
       replace-ext: 1.0.1
 
-  vite@8.2.2(@types/node@26.2.0):
+  vite@8.2.2(@types/node@26.2.0)(yaml@2.9.0):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.5
@@ -9260,11 +9173,12 @@ snapshots:
     optionalDependencies:
       '@types/node': 26.2.0
       fsevents: 2.3.3
+      yaml: 2.9.0
 
-  vitest@4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.2.0)):
+  vitest@4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.2.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.11
-      '@vitest/mocker': 4.1.11(vite@8.2.2(@types/node@26.2.0))
+      '@vitest/mocker': 4.1.11(vite@8.2.2(@types/node@26.2.0)(yaml@2.9.0))
       '@vitest/pretty-format': 4.1.11
       '@vitest/runner': 4.1.11
       '@vitest/snapshot': 4.1.11
@@ -9281,7 +9195,7 @@ snapshots:
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vite: 8.2.2(@types/node@26.2.0)
+      vite: 8.2.2(@types/node@26.2.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 26.2.0
@@ -9416,6 +9330,8 @@ snapshots:
   y18n@4.0.3: {}
 
   yallist@3.1.1: {}
+
+  yaml@2.9.0: {}
 
   yargs-parser@11.1.1:
     dependencies:

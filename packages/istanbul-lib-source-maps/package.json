@@ -34,7 +34,7 @@
   "dependencies": {
     "@jridgewell/trace-mapping": "catalog:",
     "@vitest/istanbul-lib-coverage": "workspace:*",
-    "debug": "catalog:"
+    "obug": "catalog:"
   },
   "devDependencies": {
     "tsdown": "catalog:"

@@ -4,6 +4,8 @@
     "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "types": ["node"],

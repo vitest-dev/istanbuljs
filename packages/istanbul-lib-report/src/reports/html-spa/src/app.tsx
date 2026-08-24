@@ -1,43 +1,56 @@
-// The index file for the spa running on the summary page
-const React = require("react");
-const ReactDOM = require("react-dom");
-const SummaryTableHeader = require("./summaryTableHeader");
-const SummaryTableLine = require("./summaryTableLine");
-const SummaryHeader = require("./summaryHeader");
-const getChildData = require("./getChildData");
-const FlattenToggle = require("./flattenToggle");
-const FilterToggle = require("./filterToggle");
-const FileBreadcrumbs = require("./fileBreadcrumbs");
-const { setLocation, decodeLocation } = require("./routing");
+// The application running on the report's summary page
+import { useState, useMemo, useEffect } from "preact/hooks";
 
-const { useState, useMemo, useEffect } = React;
+import FileBreadcrumbs from "./fileBreadcrumbs";
+import FilterToggle from "./filterToggle";
+import FlattenToggle from "./flattenToggle";
+import getChildData from "./getChildData";
+import { setLocation, decodeLocation } from "./routing";
+import SummaryHeader from "./summaryHeader";
+import SummaryTableHeader from "./summaryTableHeader";
+import SummaryTableLine from "./summaryTableLine";
+import type { ActiveFilters, ActiveSort, CoverageNode, MetricKey, MetricsToShow } from "./types";
 
-const sourceData = window.data;
-const metricsToShow = {};
-for (let i = 0; i < window.metricsToShow.length; i++) {
-  metricsToShow[window.metricsToShow[i]] = true;
+declare global {
+  interface Window {
+    /** the coverage tree embedded into the page by the html-spa report */
+    data: CoverageNode;
+    /** the metrics the report was asked to show */
+    metricsToShow: MetricKey[];
+    /** human-readable generation time embedded into the page */
+    generatedDatetime: string;
+  }
 }
 
 let firstMount = true;
 
-function App() {
+export default function App() {
+  const sourceData = window.data;
+  const metricsToShow = useMemo(() => {
+    const selected: MetricsToShow = {};
+    for (let i = 0; i < window.metricsToShow.length; i++) {
+      selected[window.metricsToShow[i]] = true;
+    }
+    return selected;
+  }, []);
+
   const routingDefaults = decodeLocation();
 
-  const [activeSort, setSort] = useState(
+  const [activeSort, setSort] = useState<ActiveSort>(
     (routingDefaults && routingDefaults.activeSort) || {
       sortKey: "file",
       order: "desc",
     },
   );
   const [isFlat, setIsFlat] = useState((routingDefaults && routingDefaults.isFlat) || false);
-  const [activeFilters, setFilters] = useState(
+  const [activeFilters, setFilters] = useState<ActiveFilters>(
     (routingDefaults && routingDefaults.activeFilters) || {
       low: true,
       medium: true,
       high: true,
     },
   );
-  const [expandedLines, setExpandedLines] = useState(
+  const [expandedLines, setExpandedLines] = useState<string[]>(
     (routingDefaults && routingDefaults.expandedLines) || [],
   );
   const [fileFilter, setFileFilter] = useState(
@@ -58,16 +71,12 @@ function App() {
     window.onpopstate = () => {
       const routingState = decodeLocation();
       if (routingState) {
-        // make sure all the state is set before rendering to avoid url updates
-        // alternative is to merge all the states into one so it can be set in one go
-        // https://github.com/facebook/react/issues/14259
-        ReactDOM.unstable_batchedUpdates(() => {
-          setFilters(routingState.activeFilters);
-          setSort(routingState.activeSort);
-          setIsFlat(routingState.isFlat);
-          setExpandedLines(routingState.expandedLines);
-          setFileFilter(routingState.fileFilter);
-        });
+        // preact batches these state updates into a single render on its own
+        setFilters(routingState.activeFilters);
+        setSort(routingState.activeSort);
+        setIsFlat(routingState.isFlat);
+        setExpandedLines(routingState.expandedLines);
+        setFileFilter(routingState.fileFilter);
       }
     };
   }, []);
@@ -126,5 +135,3 @@ function App() {
     </div>
   );
 }
-
-ReactDOM.render(<App />, document.getElementById("app"));

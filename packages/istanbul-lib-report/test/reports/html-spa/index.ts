@@ -141,15 +141,6 @@ describe("html-spa", () => {
             type: "copy",
             source: path.join(
               import.meta.dirname,
-              "../../../src/reports/html-spa/assets/bundle.js",
-            ),
-            dest: "./bundle.js",
-            header: undefined,
-          },
-          {
-            type: "copy",
-            source: path.join(
-              import.meta.dirname,
               "../../../src/reports/html-spa/assets/sort-arrow-sprite.png",
             ),
             dest: "./sort-arrow-sprite.png",

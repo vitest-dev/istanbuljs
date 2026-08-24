@@ -1,11 +1,11 @@
-const React = require("react");
+import type { CoverageNode, MetricKey, MetricsToShow, MetricSummary } from "./types";
 
-function MetricCells({ metrics }) {
+function MetricCells({ metrics }: { metrics: MetricSummary }) {
   const { classForPercent, pct, covered, missed, total } = metrics;
 
   return (
     <>
-      <td className={"pct " + classForPercent}>{Math.round(pct)}% </td>
+      <td className={"pct " + classForPercent}>{Math.round(Number(pct))}% </td>
       <td className={classForPercent}>
         <div className="bar">
           <div
@@ -21,7 +21,23 @@ function MetricCells({ metrics }) {
   );
 }
 
-function FileCell({ file, prefix, expandedLines, setExpandedLines, hasChildren, setFileFilter }) {
+interface FileCellProps {
+  file: string;
+  prefix: string;
+  expandedLines: string[];
+  setExpandedLines: (lines: string[]) => void;
+  hasChildren: boolean;
+  setFileFilter: (fileFilter: string) => void;
+}
+
+function FileCell({
+  file,
+  prefix,
+  expandedLines,
+  setExpandedLines,
+  hasChildren,
+  setFileFilter,
+}: FileCellProps) {
   if (hasChildren) {
     const expandedIndex = expandedLines.indexOf(prefix + file);
     const isExpanded = expandedIndex >= 0;
@@ -36,7 +52,7 @@ function FileCell({ file, prefix, expandedLines, setExpandedLines, hasChildren, 
           onClick={() => setExpandedLines(newExpandedLines)}
           className="expandbutton"
         >
-          {isExpanded ? String.fromCharCode(0x2013) : "+"}
+          {isExpanded ? "–" : "+"}
         </button>
         <a href="javascript:void(0)" onClick={() => setFileFilter(prefix + file)}>
           {file}
@@ -48,11 +64,14 @@ function FileCell({ file, prefix, expandedLines, setExpandedLines, hasChildren, 
   }
 }
 
-function getWorstMetricClassForPercent(metricsToShow, metrics) {
+function getWorstMetricClassForPercent(
+  metricsToShow: MetricsToShow,
+  metrics: CoverageNode["metrics"],
+): string {
   let classForPercent = "none";
   for (const metricToShow in metricsToShow) {
-    if (metricsToShow[metricToShow]) {
-      const metricClassForPercent = metrics[metricToShow].classForPercent;
+    if (metricsToShow[metricToShow as MetricKey]) {
+      const metricClassForPercent = metrics[metricToShow as MetricKey].classForPercent;
 
       // ignore none metrics so they don't change whats shown
       if (metricClassForPercent === "none") {
@@ -61,7 +80,7 @@ function getWorstMetricClassForPercent(metricsToShow, metrics) {
 
       // if the metric low or lower than whats currently being used, replace it
       if (
-        metricClassForPercent == "low" ||
+        metricClassForPercent === "low" ||
         (metricClassForPercent === "medium" && classForPercent !== "low") ||
         (metricClassForPercent === "high" &&
           classForPercent !== "low" &&
@@ -74,7 +93,21 @@ function getWorstMetricClassForPercent(metricsToShow, metrics) {
   return classForPercent;
 }
 
-module.exports = function SummaryTableLine({
+interface SummaryTableLineProps {
+  prefix?: string;
+  metrics: CoverageNode["metrics"];
+  file: string;
+  children?: CoverageNode["children"];
+  tabSize?: number;
+  metricsToShow: MetricsToShow;
+  expandedLines: string[];
+  setExpandedLines: (lines: string[]) => void;
+  fileFilter?: string;
+  setFileFilter: (fileFilter: string) => void;
+  isEmpty?: boolean;
+}
+
+export default function SummaryTableLine({
   prefix,
   metrics,
   file,
@@ -85,7 +118,7 @@ module.exports = function SummaryTableLine({
   setExpandedLines,
   fileFilter,
   setFileFilter,
-}) {
+}: SummaryTableLineProps) {
   tabSize = tabSize || 0;
   if (children && tabSize > 0) {
     tabSize--;
@@ -96,13 +129,9 @@ module.exports = function SummaryTableLine({
     <>
       <tr>
         <td className={"file " + getWorstMetricClassForPercent(metricsToShow, metrics)}>
-          {
-            /* eslint-disable-line prefer-spread */ Array.apply(null, {
-              length: tabSize,
-            }).map((nothing, index) => (
-              <span className="filetab" key={index} />
-            ))
-          }
+          {Array.from({ length: tabSize }).map((_, index) => (
+            <span className="filetab" key={index} />
+          ))}
           <FileCell
             file={file}
             prefix={prefix}
@@ -122,7 +151,7 @@ module.exports = function SummaryTableLine({
         children.map((child) => (
           <SummaryTableLine
             {...child}
-            tabSize={tabSize + 2}
+            tabSize={tabSize! + 2}
             key={child.file}
             prefix={prefix + file + "/"}
             metricsToShow={metricsToShow}
@@ -133,4 +162,4 @@ module.exports = function SummaryTableLine({
         ))}
     </>
   );
-};
+}

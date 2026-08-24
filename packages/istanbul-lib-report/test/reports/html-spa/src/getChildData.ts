@@ -1,6 +1,6 @@
 import { assert, describe, it } from "vitest";
 
-import getChildData from "../../../../src/reports/html-spa/src/getChildData.js";
+import getChildData from "../../../../src/reports/html-spa/src/getChildData";
 
 const mediumMetrics = {
   statements: {

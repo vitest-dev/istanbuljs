@@ -1,7 +1,7 @@
-const React = require("react");
+import type { ActiveSort, MetricsToShow } from "./types";
 
-function getSortDetails(sortKey, activeSort) {
-  let newSort = { sortKey, order: "desc" };
+function getSortDetails(sortKey: string, activeSort: ActiveSort) {
+  let newSort: ActiveSort = { sortKey, order: "desc" };
   let sortClass = "";
   if (activeSort && activeSort.sortKey === sortKey) {
     sortClass = "sorted";
@@ -21,7 +21,19 @@ function getSortDetails(sortKey, activeSort) {
   };
 }
 
-function SummaryTableHeaderCell({ name, onSort, sortKey, activeSort }) {
+interface SummaryTableHeaderCellProps {
+  name: string;
+  onSort: (sort: ActiveSort) => void;
+  sortKey: string;
+  activeSort: ActiveSort;
+}
+
+function SummaryTableHeaderCell({
+  name,
+  onSort,
+  sortKey,
+  activeSort,
+}: SummaryTableHeaderCellProps) {
   const { newSort, sortClass } = getSortDetails(sortKey, activeSort);
   return (
     <th className={"sortable headercell " + sortClass} onClick={() => onSort(newSort)}>
@@ -31,7 +43,12 @@ function SummaryTableHeaderCell({ name, onSort, sortKey, activeSort }) {
   );
 }
 
-function FileHeaderCell({ onSort, activeSort }) {
+interface FileHeaderCellProps {
+  onSort: (sort: ActiveSort) => void;
+  activeSort: ActiveSort;
+}
+
+function FileHeaderCell({ onSort, activeSort }: FileHeaderCellProps) {
   const { newSort, sortClass } = getSortDetails("file", activeSort);
 
   return (
@@ -42,7 +59,13 @@ function FileHeaderCell({ onSort, activeSort }) {
   );
 }
 
-function SubHeadings({ sortKeyPrefix, onSort, activeSort }) {
+interface SubHeadingsProps {
+  sortKeyPrefix: string;
+  onSort: (sort: ActiveSort) => void;
+  activeSort: ActiveSort;
+}
+
+function SubHeadings({ sortKeyPrefix, onSort, activeSort }: SubHeadingsProps) {
   return (
     <>
       <SummaryTableHeaderCell
@@ -74,7 +97,17 @@ function SubHeadings({ sortKeyPrefix, onSort, activeSort }) {
   );
 }
 
-module.exports = function SummaryTableHeader({ onSort, activeSort, metricsToShow }) {
+interface SummaryTableHeaderProps {
+  onSort: (sort: ActiveSort) => void;
+  activeSort: ActiveSort;
+  metricsToShow: MetricsToShow;
+}
+
+export default function SummaryTableHeader({
+  onSort,
+  activeSort,
+  metricsToShow,
+}: SummaryTableHeaderProps) {
   return (
     <thead>
       <tr className="topheading">
@@ -101,4 +134,4 @@ module.exports = function SummaryTableHeader({ onSort, activeSort, metricsToShow
       </tr>
     </thead>
   );
-};
+}

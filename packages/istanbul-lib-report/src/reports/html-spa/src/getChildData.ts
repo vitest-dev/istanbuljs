@@ -1,12 +1,21 @@
-function addPath(node, parentPath) {
+import type {
+  ActiveSort,
+  ActiveFilters,
+  CoverageNode,
+  MetricKey,
+  MetricsToShow,
+  MetricSummary,
+} from "./types";
+
+function addPath(node: CoverageNode, parentPath?: string): CoverageNode {
   if (!parentPath) {
     return node;
   }
   return { ...node, file: parentPath + "/" + node.file };
 }
 
-function flatten(nodes, parentPath) {
-  let children = [];
+function flatten(nodes: CoverageNode[], parentPath?: string): CoverageNode[] {
+  let children: CoverageNode[] = [];
   for (let i = 0; i < nodes.length; i++) {
     const child = nodes[i];
     if (child.children) {
@@ -21,8 +30,12 @@ function flatten(nodes, parentPath) {
   return children;
 }
 
-function filterByFile(nodes, fileFilter, parentPath) {
-  let children = [];
+function filterByFile(
+  nodes: CoverageNode[],
+  fileFilter: string,
+  parentPath?: string,
+): CoverageNode[] {
+  let children: CoverageNode[] = [];
 
   for (let i = 0; i < nodes.length; i++) {
     const child = nodes[i];
@@ -34,7 +47,7 @@ function filterByFile(nodes, fileFilter, parentPath) {
 
     if (isChildUnderFilter) {
       // flatten and continue looking underneath
-      children = [...children, ...filterByFile(child.children, fileFilter, childFullPath)];
+      children = [...children, ...filterByFile(child.children || [], fileFilter, childFullPath)];
     } else if (isChildAboveFilter) {
       // remove the parent path and add everything underneath
       const charsToRemoveFromFile = fileFilter.length - (parentPath ? parentPath.length : 0);
@@ -51,17 +64,20 @@ function filterByFile(nodes, fileFilter, parentPath) {
   return children;
 }
 
-function sort(childData, activeSort) {
+function sort(childData: CoverageNode[], activeSort: ActiveSort): CoverageNode[] {
   const top = activeSort.order === "asc" ? 1 : -1;
   const bottom = activeSort.order === "asc" ? -1 : 1;
   childData.sort((a, b) => {
-    let valueA;
-    let valueB;
+    let valueA: string | number;
+    let valueB: string | number;
     if (activeSort.sortKey === "file") {
       valueA = a.file;
       valueB = b.file;
     } else {
-      const [metricType, valueType] = activeSort.sortKey.split(".");
+      const [metricType, valueType] = activeSort.sortKey.split(".") as [
+        MetricKey,
+        keyof MetricSummary,
+      ];
       valueA = a.metrics[metricType][valueType];
       valueB = b.metrics[metricType][valueType];
     }
@@ -84,8 +100,12 @@ function sort(childData, activeSort) {
   return childData;
 }
 
-function filter(nodes, metricsMap, activeFilters) {
-  const children = [];
+function filter(
+  nodes: CoverageNode[],
+  metricsMap: MetricsToShow,
+  activeFilters: ActiveFilters,
+): CoverageNode[] {
+  const children: CoverageNode[] = [];
   for (let i = 0; i < nodes.length; i++) {
     let child = nodes[i];
     if (child.children) {
@@ -108,15 +128,15 @@ function filter(nodes, metricsMap, activeFilters) {
   return children;
 }
 
-module.exports = function getChildData(
-  sourceData,
-  metricsToShow,
-  activeSort,
-  isFlat,
-  activeFilters,
-  fileFilter,
-) {
-  let childData = sourceData.children;
+export default function getChildData(
+  sourceData: CoverageNode,
+  metricsToShow: MetricsToShow,
+  activeSort: ActiveSort | null,
+  isFlat: boolean,
+  activeFilters: ActiveFilters,
+  fileFilter: string | null,
+): CoverageNode[] {
+  let childData = sourceData.children || [];
 
   if (isFlat) {
     childData = flatten(childData.slice(0));
@@ -135,4 +155,4 @@ module.exports = function getChildData(
     childData = sort(childData, activeSort);
   }
   return childData;
-};
+}

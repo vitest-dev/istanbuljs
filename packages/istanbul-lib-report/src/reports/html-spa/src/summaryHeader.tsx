@@ -1,8 +1,13 @@
-const React = require("react");
+import type { CoverageNode, MetricKey, MetricsToShow, MetricSummary } from "./types";
 
-function Ignores({ metrics, metricsToShow }) {
-  const metricKeys = Object.keys(metricsToShow);
-  const result = [];
+interface IgnoresProps {
+  metrics: CoverageNode["metrics"];
+  metricsToShow: MetricsToShow;
+}
+
+function Ignores({ metrics, metricsToShow }: IgnoresProps) {
+  const metricKeys = Object.keys(metricsToShow) as MetricKey[];
+  const result: string[] = [];
 
   for (let i = 0; i < metricKeys.length; i++) {
     const metricKey = metricKeys[i];
@@ -10,14 +15,14 @@ function Ignores({ metrics, metricsToShow }) {
       const skipped = metrics[metricKey].skipped;
       if (skipped > 0) {
         result.push(
-          `${skipped} ${metricKey}${skipped === 1 ? "" : metricKey === "branch" ? "es" : "s"}`,
+          `${skipped} ${metricKey}${skipped === 1 ? "" : metricKey === ("branch" as string) ? "es" : "s"}`,
         );
       }
     }
   }
 
   if (result.length === 0) {
-    return false;
+    return null;
   }
 
   return (
@@ -28,7 +33,12 @@ function Ignores({ metrics, metricsToShow }) {
   );
 }
 
-function StatusMetric({ data, name }) {
+interface StatusMetricProps {
+  data: MetricSummary;
+  name: string;
+}
+
+function StatusMetric({ data, name }: StatusMetricProps) {
   return (
     <div className="toolbar__item">
       <span className="strong">{data.pct}%</span> <span className="quiet">{name}</span>{" "}
@@ -39,7 +49,12 @@ function StatusMetric({ data, name }) {
   );
 }
 
-module.exports = function SummaryHeader({ metrics, metricsToShow }) {
+interface SummaryHeaderProps {
+  metrics: CoverageNode["metrics"];
+  metricsToShow: MetricsToShow;
+}
+
+export default function SummaryHeader({ metrics, metricsToShow }: SummaryHeaderProps) {
   return (
     <div className="toolbar">
       {metricsToShow.statements && <StatusMetric data={metrics.statements} name="Statements" />}
@@ -49,4 +64,4 @@ module.exports = function SummaryHeader({ metrics, metricsToShow }) {
       <Ignores metrics={metrics} metricsToShow={metricsToShow} />
     </div>
   );
-};
+}

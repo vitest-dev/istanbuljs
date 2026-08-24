@@ -6,8 +6,7 @@ export default defineConfig({
       enabled: true,
       provider: "v8",
       include: ["packages/**/src/**/*.ts"],
-      exclude: ["packages/istanbul-lib-report/src/reports/**"],
     },
-    projects: ["packages/*"],
+    projects: ["packages/*/vitest.config.*"],
   },
 });

@@ -1,6 +1,9 @@
-const React = require("react");
+interface FlattenButtonProps {
+  setIsFlat: (isFlat: boolean) => void;
+  isFlat: boolean;
+}
 
-module.exports = function FlattenButton({ setIsFlat, isFlat }) {
+export default function FlattenButton({ setIsFlat, isFlat }: FlattenButtonProps) {
   return (
     <div className="toggle">
       <div className="toggle__label">Files:</div>
@@ -20,4 +23,4 @@ module.exports = function FlattenButton({ setIsFlat, isFlat }) {
       </div>{" "}
     </div>
   );
-};
+}

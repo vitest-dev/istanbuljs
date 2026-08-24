@@ -29,23 +29,16 @@
   "exports": "./dist/index.mjs",
   "scripts": {
     "build": "tsdown",
-    "test": "pnpm --filter @vitest/istanbuljs-monorepo run test --project @vitest/istanbul-lib-report",
-    "build:spa": "webpack --config src/reports/html-spa/webpack.config.cjs --mode production",
-    "build:spa:watch": "webpack --config src/reports/html-spa/webpack.config.cjs --watch --mode development"
+    "test": "pnpm --filter @vitest/istanbuljs-monorepo run test --project @vitest/istanbul-lib-report"
   },
   "dependencies": {
     "@vitest/istanbul-lib-coverage": "workspace:*"
   },
   "devDependencies": {
-    "@babel/core": "catalog:",
-    "@babel/preset-env": "catalog:",
-    "@babel/preset-react": "catalog:",
-    "babel-loader": "catalog:",
-    "react": "catalog:",
-    "react-dom": "catalog:",
-    "tsdown": "catalog:",
-    "webpack": "catalog:",
-    "webpack-cli": "catalog:"
+    "@vitest/browser-playwright": "catalog:",
+    "playwright": "catalog:",
+    "preact": "catalog:",
+    "tsdown": "catalog:"
   },
   "engines": {
     "node": ">=22"

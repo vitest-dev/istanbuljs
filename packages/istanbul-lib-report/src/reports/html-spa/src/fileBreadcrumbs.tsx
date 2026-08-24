@@ -1,6 +1,9 @@
-const React = require("react");
+interface FileBreadcrumbsProps {
+  fileFilter?: string;
+  setFileFilter: (fileFilter: string) => void;
+}
 
-module.exports = function FileBreadcrumbs({ fileFilter = "", setFileFilter }) {
+export default function FileBreadcrumbs({ fileFilter = "", setFileFilter }: FileBreadcrumbsProps) {
   const parts = fileFilter.split("/");
   const breadcrumbs = [
     {
@@ -25,4 +28,4 @@ module.exports = function FileBreadcrumbs({ fileFilter = "", setFileFilter }) {
       </>
     ),
   );
-};
+}

@@ -236,6 +236,42 @@ const mergeProp = <H extends Hits, T>(
   return [hits as Record<string, H>, map];
 };
 
+const ANONYMOUS_FN_NAME = /^\(anonymous_(\d+)\)$/;
+
+function renameConflictingFns(fnMap: Record<string, FunctionMapping>) {
+  const usedNames = new Set<string>();
+
+  for (const [key, fn] of Object.entries(fnMap)) {
+    if (!usedNames.has(fn.name)) {
+      usedNames.add(fn.name);
+      continue;
+    }
+
+    const anonMatch = ANONYMOUS_FN_NAME.exec(fn.name);
+    let newName: string;
+
+    if (anonMatch) {
+      let i = Number(anonMatch[1]) + 1;
+      newName = `(anonymous_${i})`;
+
+      while (usedNames.has(newName)) {
+        newName = `(anonymous_${++i})`;
+      }
+    } else {
+      let i = 2;
+      newName = `${fn.name}_${i}`;
+
+      while (usedNames.has(newName)) {
+        newName = `${fn.name}_${++i}`;
+      }
+    }
+
+    // copy the mapping, as it may be shared with the merged-in coverage object
+    fnMap[key] = { ...fn, name: newName };
+    usedNames.add(newName);
+  }
+}
+
 /**
  * provides a read-only view of coverage for a single file.
  * The deep structure of this object is documented elsewhere. It has the following
@@ -380,6 +416,7 @@ class FileCoverage {
     const keyFromLocationsProp = (x: BranchMapping) => keyFromLoc(x.locations[0]);
 
     const [f, fnMap] = mergeProp(this.f, this.fnMap, other.f, other.fnMap, keyFromLocProp);
+    renameConflictingFns(fnMap);
     this.data.f = f;
     this.data.fnMap = fnMap;
 

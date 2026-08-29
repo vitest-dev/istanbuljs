@@ -893,6 +893,121 @@ describe("base coverage", () => {
     });
   });
 
+  it("keeps function names unique when merging chunks with colliding anonymous names", () => {
+    /* https://github.com/vitest-dev/vitest/issues/11069
+     *
+     * source.js
+     * ```js
+     * export function sum(a, b) {
+     *   return a + b;
+     * }
+     * export function multiply(a, b) {
+     *   return a * b;
+     * }
+     * ```
+     *
+     *  - chunk A: fnMap { 0: "(anonymous_0)" → multiply }
+     *  - chunk B: fnMap { 0: "(anonymous_0)" → sum, 1: "(anonymous_1)" → multiply }
+     */
+    const sum: Range = {
+      start: { line: 1, column: 0 },
+      end: { line: 3, column: 1 },
+    };
+    const multiply: Range = {
+      start: { line: 4, column: 0 },
+      end: { line: 6, column: 1 },
+    };
+
+    const chunkA = new FileCoverage({
+      path: "/source.js",
+      statementMap: {},
+      fnMap: {
+        "0": { name: "(anonymous_0)", decl: multiply, loc: multiply, line: 4 },
+      },
+      branchMap: {},
+      s: {},
+      f: { "0": 1 },
+      b: {},
+    });
+
+    const chunkB = new FileCoverage({
+      path: "/source.js",
+      statementMap: {},
+      fnMap: {
+        "0": { name: "(anonymous_0)", decl: sum, loc: sum, line: 1 },
+        "1": { name: "(anonymous_1)", decl: multiply, loc: multiply, line: 4 },
+      },
+      branchMap: {},
+      s: {},
+      f: { "0": 1, "1": 1 },
+      b: {},
+    });
+
+    chunkA.merge(chunkB);
+
+    const names = Object.values(chunkA.fnMap).map((fn) => fn.name);
+    expect(names).toHaveLength(2);
+    expect(names).toContain("(anonymous_0)");
+    expect(names).toContain("(anonymous_1)");
+  });
+
+  it("keeps function names unique when merging chunks with colliding named functions", () => {
+    /* classes.ts
+     * ```ts
+     * export class Foo {
+     *   constructor() {}
+     * }
+     * export class Bar {
+     *   constructor() {}
+     * }
+     * ```
+     *
+     *  - chunk A: fnMap { 0: "constructor" → Bar#constructor }
+     *  - chunk B: fnMap { 0: "constructor" → Foo#constructor, 1: "constructor" → Bar#constructor }
+     */
+    const fooConstructor: Range = {
+      start: { line: 2, column: 2 },
+      end: { line: 2, column: 18 },
+    };
+    const barConstructor: Range = {
+      start: { line: 5, column: 2 },
+      end: { line: 5, column: 18 },
+    };
+
+    const chunkA = new FileCoverage({
+      path: "/classes.ts",
+      statementMap: {},
+      fnMap: {
+        "0": { name: "constructor", decl: barConstructor, loc: barConstructor, line: 5 },
+      },
+      branchMap: {},
+      s: {},
+      f: { "0": 1 },
+      b: {},
+    });
+
+    const chunkB = new FileCoverage({
+      path: "/classes.ts",
+      statementMap: {},
+      fnMap: {
+        "0": { name: "constructor", decl: fooConstructor, loc: fooConstructor, line: 2 },
+        "1": { name: "constructor", decl: barConstructor, loc: barConstructor, line: 5 },
+      },
+      branchMap: {},
+      s: {},
+      f: { "0": 1, "1": 1 },
+      b: {},
+    });
+
+    chunkA.merge(chunkB);
+
+    const names = Object.values(chunkA.fnMap).map((fn) => fn.name);
+    expect(names).toHaveLength(2);
+    expect(new Set(names).size, `duplicate function names: ${names.join(", ")}`).toBe(2);
+    expect(names).toContain("constructor");
+    expect(names).toContain("constructor_2");
+  });
+
   it("resets hits when requested", () => {
     const loc = function (sl: number, sc: number, el: number, ec: number): Range {
       return {

@@ -1,6 +1,6 @@
 {
   "name": "@vitest/istanbul-lib-instrument",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Core istanbul API for JS code coverage",
   "keywords": [
     "coverage",

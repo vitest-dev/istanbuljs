@@ -1,6 +1,6 @@
 {
   "name": "@vitest/istanbuljs-monorepo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Code Coverage utilities for Vitest and other modern testing frameworks",
   "keywords": [

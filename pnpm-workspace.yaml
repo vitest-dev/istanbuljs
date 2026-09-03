@@ -21,10 +21,29 @@ catalog:
   oxlint: ^1.79.0
   preact: ^10.29.8
   playwright: ^1.62.1
-  vitest: ^4.1.10
+  vitest: ^5.0.0
   yaml: ^2.9.0
-  "@vitest/browser-playwright": 4.1.11
-  "@vitest/coverage-v8": 4.1.11
+  "@vitest/browser-playwright": ^5.0.0
+  "@vitest/coverage-v8": ^5.0.0
   typescript: ^7.0.2
   "@e18e/eslint-plugin": ^0.8.0
   changelogithub: ^15.0.4
+minimumReleaseAgeExclude:
+  - "@vitest/browser-playwright@5.0.0"
+  - "@vitest/browser@5.0.0"
+  - "@vitest/coverage-v8@5.0.0"
+  - "@vitest/mocker@5.0.0"
+  - "@vitest/pretty-format@5.0.0"
+  - "@vitest/spy@5.0.0"
+  - "@vitest/ui@5.0.0"
+  - "@vitest/utils@5.0.0"
+  - vitest@5.0.0
+
+# Use local packages in test run
+overrides:
+  "@vitest/coverage-istanbul>@vitest/istanbul-lib-coverage": "./packages/istanbul-lib-coverage"
+  "@vitest/coverage-istanbul>@vitest/istanbul-lib-instrument": "./packages/istanbul-lib-instrument"
+  "@vitest/coverage-istanbul>@vitest/istanbul-lib-report": "./packages/istanbul-lib-report"
+  "@vitest/coverage-istanbul>@vitest/istanbul-lib-source-maps": "./packages/istanbul-lib-source-maps"
+  "@vitest/coverage-v8>@vitest/istanbul-lib-coverage": "./packages/istanbul-lib-coverage"
+  "@vitest/coverage-v8>@vitest/istanbul-lib-report": "./packages/istanbul-lib-report"

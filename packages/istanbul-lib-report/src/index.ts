@@ -18,6 +18,8 @@ import CloverReport from "./reports/clover/index";
 import type { CloverOptions } from "./reports/clover/index";
 import CoberturaReport from "./reports/cobertura/index";
 import type { CoberturaOptions } from "./reports/cobertura/index";
+import HtmlModernReport from "./reports/html-modern/index";
+import type { HtmlModernOptions } from "./reports/html-modern/index";
 import HtmlSpaReport from "./reports/html-spa/index";
 import type { HtmlSpaOptions } from "./reports/html-spa/index";
 import HtmlReport from "./reports/html/index";
@@ -49,6 +51,22 @@ export type { ReportBaseOptions } from "./report-base";
 export type { CloverOptions } from "./reports/clover/index";
 export type { CoberturaOptions } from "./reports/cobertura/index";
 export type { HtmlSpaOptions } from "./reports/html-spa/index";
+export type {
+  CoverageData,
+  GenerateOptions,
+  GenerateResult,
+  HtmlModernOptions,
+  IstanbulReportContext,
+  ReportData,
+  ReportStats,
+  SerializableHtmlModernOptions,
+} from "./reports/html-modern/index";
+export {
+  CoverageReport,
+  extractIstanbulContext,
+  inferProjectRoot,
+} from "./reports/html-modern/index";
+export { default as HtmlModernReport } from "./reports/html-modern/index";
 export type { HtmlOptions, LinkMapper } from "./reports/html/index";
 export type { JsonSummaryOptions } from "./reports/json-summary/index";
 export type { JsonOptions } from "./reports/json/index";
@@ -97,6 +115,7 @@ const reports = {
   clover: CloverReport,
   cobertura: CoberturaReport,
   html: HtmlReport,
+  "html-modern": HtmlModernReport,
   "html-spa": HtmlSpaReport,
   json: JsonReport,
   "json-summary": JsonSummaryReport,
@@ -114,6 +133,7 @@ export interface ReportOptions {
   clover: CloverOptions;
   cobertura: CoberturaOptions;
   html: HtmlOptions;
+  "html-modern": HtmlModernOptions;
   "html-spa": HtmlSpaOptions;
   json: JsonOptions;
   "json-summary": JsonSummaryOptions;

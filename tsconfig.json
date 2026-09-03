@@ -17,5 +17,6 @@
       "@vitest/istanbul-lib-source-maps": ["./packages/istanbul-lib-source-maps/src/index.ts"]
     }
   },
-  "include": ["packages/*/src", "packages/*/test"]
+  "include": ["packages/*/src", "packages/*/test"],
+  "exclude": ["packages/istanbul-report-html-modern"]
 }

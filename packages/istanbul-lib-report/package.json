@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@vitest/browser-playwright": "catalog:",
+    "@vitest/istanbul-report-html-modern": "workspace:*",
     "playwright": "catalog:",
     "preact": "catalog:",
     "tsdown": "catalog:"

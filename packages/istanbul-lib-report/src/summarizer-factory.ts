@@ -145,10 +145,6 @@ interface InitialListNode {
   fileCoverage: FileCoverage;
 }
 
-function findCommonParent(paths: Path[]): Path {
-  return paths.reduce((common, path) => common.commonPrefixPath(path), paths[0] || new Path([]));
-}
-
 function findOrCreateParent(
   parentPath: Path,
   nodeMap: Record<string, ReportNode>,
@@ -231,7 +227,7 @@ class SummarizerFactory {
       path: new Path(filePath),
       fileCoverage: coverageMap.fileCoverageFor(filePath),
     }));
-    this._commonParent = findCommonParent(this._initialList.map((o) => o.path.parent()));
+    this._commonParent = Path.findCommonParent(this._initialList.map((o) => o.path.parent()));
     if (this._commonParent.length > 0) {
       this._initialList.forEach((o) => {
         o.path.splice(0, this._commonParent.length);

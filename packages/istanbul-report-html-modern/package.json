@@ -1,0 +1,75 @@
+{
+  "name": "@vitest/istanbul-report-html-modern",
+  "version": "1.0.0",
+  "description": "Modern Istanbul HTML coverage report: React UI + single-file HTML page",
+  "keywords": [
+    "coverage",
+    "html",
+    "istanbul",
+    "react",
+    "report",
+    "vitest"
+  ],
+  "homepage": "https://vitest.dev/",
+  "bugs": {
+    "url": "https://github.com/vitest-dev/vitest/issues"
+  },
+  "license": "MIT",
+  "author": "Travis Zhang<https://github.com/travzhang>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vitest-dev/istanbuljs.git",
+    "directory": "packages/istanbul-report-html-modern"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json",
+    "./style.css": "./dist/style.css"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm run build:lib && pnpm run build:page",
+    "build:lib": "tsdown",
+    "build:page": "vite build",
+    "dev": "vite",
+    "play": "vite --config vite.config.playground.ts",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons": "catalog:",
+    "antd": "catalog:",
+    "monaco-editor": "catalog:",
+    "react-highlight-words": "catalog:"
+  },
+  "devDependencies": {
+    "@tsdown/css": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@types/react-highlight-words": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-singlefile": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

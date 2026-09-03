@@ -1,0 +1,40 @@
+.report-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.report-page__content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.report-footer {
+  flex-shrink: 0;
+  padding: 8px 16px 6px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--report-line-coverage-text);
+  border-top: 1px solid var(--report-line-coverage-bg);
+}
+
+.report-footer__meta {
+  margin: 0;
+}
+
+.report-footer a {
+  color: var(--report-link);
+  text-decoration: none;
+}
+
+.report-footer a:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.report-footer__sep {
+  margin: 0 0.35em;
+  opacity: 0.55;
+}

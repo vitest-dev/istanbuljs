@@ -131,6 +131,10 @@ class Path {
     return new Path(ret);
   }
 
+  static findCommonParent(paths: Path[]): Path {
+    return paths.reduce((common, path) => common.commonPrefixPath(path), paths[0] ?? new Path([]));
+  }
+
   static compare(a: Path, b: Path): number {
     const al = a.length;
     const bl = b.length;

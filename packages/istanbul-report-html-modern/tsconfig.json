@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsxImportSource": "react",
+    "types": ["vite/client"],
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": [
+    "src/lib",
+    "src/page",
+    "vite.config.ts",
+    "vite.config.playground.ts",
+    "vite-plugin-report-data-dev.ts",
+    "report-data-placeholder.ts",
+    "playground/src"
+  ],
+  "exclude": []
+}

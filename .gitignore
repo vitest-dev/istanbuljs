@@ -9,3 +9,6 @@ dist
 lerna-debug.log
 packages/*/yarn.lock
 packages/nyc/
+
+.DS_Store
+.pnpm-store

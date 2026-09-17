@@ -54,4 +54,18 @@ describe("TextReport", () => {
       createTest(file);
     }
   });
+
+  it("replaces an empty skipFull table with a fully-covered summary", () => {
+    const fixture = require(
+      path.resolve(import.meta.dirname, "../fixtures/specs/100-line-100-branch.json"),
+    );
+    const context = istanbulLibReport.createContext({
+      dir: "./",
+      coverageMap: istanbulLibCoverage.createCoverageMap(fixture.map),
+    });
+    const tree = context.getTree("pkg");
+    const report = new TextReport({ ...fixture.opts, skipFull: true });
+    tree.visit(report, context);
+    assert.equal(FileWriter.getOutput(), "All 1 files fully covered\n");
+  });
 });

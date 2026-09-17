@@ -174,13 +174,203 @@ function makeLine(nameWidth: number, missingWidth: number): string {
   return elements.join(DELIM.replace(/ /g, "-")) + "-";
 }
 
-function tableHeader(maxNameCols: number, missingWidth: string | number): string {
+function tableHeader(maxNameCols: number, missingWidth: number): string {
   const elements = [];
   elements.push(formatName("File", maxNameCols, 0));
   elements.push(formatPct("% Stmts"));
   elements.push(formatPct("% Branch", PCT_COLS + 1));
   elements.push(formatPct("% Funcs"));
   elements.push(formatPct("% Lines"));
-  elements.push(formatName("Uncovered Line #s", missingWidth as number));
+  elements.push(formatName("Uncovered Line #s", missingWidth));
   return elements.join(DELIM) + " ";
 }
+
+function isFull(metrics: CoverageSummary): boolean {
+  return (
+    metrics.statements.pct === 100 &&
+    metrics.branches.pct === 100 &&
+    metrics.functions.pct === 100 &&
+    metrics.lines.pct === 100
+  );
+}
+
+function skipFullTableStats(
+  root: ReportNode,
+  context: Context,
+  skipEmpty: boolean | undefined,
+  skipFull: boolean | undefined,
+): { hideTable: boolean; fullFileCount: number } {
+  let fullFileCount = 0;
+  let incompleteFiles = 0;
+
+  function inspect(node: ReportNode) {
+    if (node.isSummary()) {
+      return;
+    }
+    const metrics = node.getCoverageSummary();
+    if (!metrics) {
+      return;
+    }
+    if (skipEmpty && metrics.isEmpty()) {
+      return;
+    }
+    if (isFull(metrics)) {
+      fullFileCount += 1;
+    } else {
+      incompleteFiles += 1;
+    }
+  }
+
+  root.visit(
+    context.getVisitor({
+      onSummary: inspect,
+      onDetail: inspect,
+    }),
+  );
+
+  return {
+    hideTable: Boolean(skipFull) && incompleteFiles === 0 && fullFileCount > 0,
+    fullFileCount,
+  };
+}
+
+function tableRow(
+  node: ReportNode,
+  context: Context,
+  colorizer: (str: string, clazz?: string) => string,
+  maxNameCols: number,
+  level: number,
+  skipEmpty: boolean | undefined,
+  skipFull: boolean | undefined,
+  missingWidth: number,
+): string {
+  const name = nodeName(node);
+  const metrics = node.getCoverageSummary()!;
+  const isEmpty = metrics.isEmpty();
+  if (skipEmpty && isEmpty) {
+    return "";
+  }
+  if (skipFull && isFull(metrics)) {
+    return "";
+  }
+
+  const mm: Record<MetricKey, number | "Unknown"> = {
+    statements: isEmpty ? 0 : metrics.statements.pct,
+    branches: isEmpty ? 0 : metrics.branches.pct,
+    functions: isEmpty ? 0 : metrics.functions.pct,
+    lines: isEmpty ? 0 : metrics.lines.pct,
+  };
+  const colorize: (str: string, key: MetricKey) => string = isEmpty
+    ? function (str) {
+        return str;
+      }
+    : function (str, key) {
+        return colorizer(str, classForPercent(context, key, mm[key]));
+      };
+  const elements = [];
+
+  elements.push(colorize(formatName(name, maxNameCols, level), "statements"));
+  elements.push(colorize(formatPct(mm.statements), "statements"));
+  elements.push(colorize(formatPct(mm.branches, PCT_COLS + 1), "branches"));
+  elements.push(colorize(formatPct(mm.functions), "functions"));
+  elements.push(colorize(formatPct(mm.lines), "lines"));
+  elements.push(
+    colorizer(formatName(nodeMissing(node), missingWidth), mm.lines === 100 ? "medium" : "low"),
+  );
+
+  return elements.join(DELIM) + " ";
+}
+
+class TextReport extends ReportBase {
+  declare file: string | null;
+  declare maxCols: number;
+  declare cw: ContentWriter | null;
+  declare skipEmpty: boolean | undefined;
+  declare skipFull: boolean | undefined;
+  declare nameWidth: number;
+  declare missingWidth: number;
+  declare hideTable: boolean;
+
+  constructor(opts?: TextOptions) {
+    super(opts);
+
+    opts = opts || {};
+    const { maxCols } = opts;
+
+    this.file = opts.file || null;
+    this.maxCols = maxCols != null ? maxCols : process.stdout.columns || 80;
+    this.cw = null;
+    this.skipEmpty = opts.skipEmpty;
+    this.skipFull = opts.skipFull;
+    this.hideTable = false;
+  }
+
+  onStart(root: ReportNode, context: Context): void {
+    this.cw = context.writer.writeFile(this.file);
+    const { hideTable, fullFileCount } = skipFullTableStats(
+      root,
+      context,
+      this.skipEmpty,
+      this.skipFull,
+    );
+    this.hideTable = hideTable;
+    if (this.hideTable) {
+      this.cw.println(`All ${fullFileCount} files fully covered`);
+      return;
+    }
+    this.nameWidth = Math.max(NAME_COL, findWidth(root, context, nodeName, depthFor));
+    this.missingWidth = Math.max(MISSING_COL, findWidth(root, context, nodeMissing));
+
+    if (this.maxCols > 0) {
+      const pct_cols = DELIM.length + 4 * (PCT_COLS + DELIM.length) + 2;
+
+      const maxRemaining = this.maxCols - (pct_cols + MISSING_COL);
+      if (this.nameWidth > maxRemaining) {
+        this.nameWidth = maxRemaining;
+        this.missingWidth = MISSING_COL;
+      } else if (this.nameWidth < maxRemaining) {
+        const maxRemaining = this.maxCols - (this.nameWidth + pct_cols);
+        if (this.missingWidth > maxRemaining) {
+          this.missingWidth = maxRemaining;
+        }
+      }
+    }
+    const line = makeLine(this.nameWidth, this.missingWidth);
+    this.cw.println(line);
+    this.cw.println(tableHeader(this.nameWidth, this.missingWidth));
+    this.cw.println(line);
+  }
+
+  onSummary(node: ReportNode, context: Context): void {
+    if (this.hideTable) {
+      return;
+    }
+    const nodeDepth = depthFor(node);
+    const row = tableRow(
+      node,
+      context,
+      this.cw!.colorize.bind(this.cw),
+      this.nameWidth,
+      nodeDepth,
+      this.skipEmpty,
+      this.skipFull,
+      this.missingWidth,
+    );
+    if (row) {
+      this.cw!.println(row);
+    }
+  }
+
+  onDetail(node: ReportNode, context: Context): void {
+    return this.onSummary(node, context);
+  }
+
+  onEnd(): void {
+    if (!this.hideTable) {
+      this.cw!.println(makeLine(this.nameWidth, this.missingWidth));
+    }
+    this.cw!.close();
+  }
+}
+
+export default TextReport;

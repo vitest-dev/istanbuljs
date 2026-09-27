@@ -194,6 +194,46 @@ function isFull(metrics: CoverageSummary): boolean {
   );
 }
 
+/** why a row is left out of the table, or `null` when it is printed */
+function skipReason(
+  metrics: CoverageSummary,
+  skipEmpty: boolean | undefined,
+  skipFull: boolean | undefined,
+): "empty" | "full" | null {
+  if (skipEmpty && metrics.isEmpty()) return "empty";
+  if (skipFull && isFull(metrics)) return "full";
+  return null;
+}
+
+/** counts of skipped files when `skipFull` would leave the table without file rows, otherwise `null` */
+function hiddenTableCounts(
+  root: ReportNode,
+  context: Context,
+  skipEmpty: boolean | undefined,
+  skipFull: boolean | undefined,
+): { full: number; empty: number } | null {
+  if (!skipFull) return null;
+
+  const counts = { full: 0, empty: 0, shown: 0 };
+  root.visit(
+    context.getVisitor({
+      onDetail(node) {
+        const metrics = node.getCoverageSummary()!;
+
+        if (!skipReason(metrics, skipEmpty, skipFull)) counts.shown += 1;
+        // empty files are hidden by `skipFull` too, but they are not "fully covered"
+        else if (metrics.isEmpty()) counts.empty += 1;
+        else counts.full += 1;
+      },
+    }),
+  );
+  return counts.shown === 0 && counts.full + counts.empty > 0 ? counts : null;
+}
+
+function fileNoun(count: number): string {
+  return count === 1 ? "file" : "files";
+}
+
 function tableRow(
   node: ReportNode,
   context: Context,
@@ -207,10 +247,7 @@ function tableRow(
   const name = nodeName(node);
   const metrics = node.getCoverageSummary()!;
   const isEmpty = metrics.isEmpty();
-  if (skipEmpty && isEmpty) {
-    return "";
-  }
-  if (skipFull && isFull(metrics)) {
+  if (skipReason(metrics, skipEmpty, skipFull)) {
     return "";
   }
 
@@ -249,6 +286,7 @@ class TextReport extends ReportBase {
   declare skipFull: boolean | undefined;
   declare nameWidth: number;
   declare missingWidth: number;
+  declare hideTable: boolean;
 
   constructor(opts?: TextOptions) {
     super(opts);
@@ -261,10 +299,23 @@ class TextReport extends ReportBase {
     this.cw = null;
     this.skipEmpty = opts.skipEmpty;
     this.skipFull = opts.skipFull;
+    this.hideTable = false;
   }
 
   onStart(root: ReportNode, context: Context): void {
     this.cw = context.writer.writeFile(this.file);
+    const counts = hiddenTableCounts(root, context, this.skipEmpty, this.skipFull);
+    this.hideTable = counts !== null;
+    if (counts) {
+      this.cw.println("No files with missing coverage.");
+      if (counts.full > 0) {
+        this.cw.println(`${counts.full} ${fileNoun(counts.full)} fully covered.`);
+      }
+      if (counts.empty > 0) {
+        this.cw.println(`${counts.empty} empty ${fileNoun(counts.empty)} skipped.`);
+      }
+      return;
+    }
     this.nameWidth = Math.max(NAME_COL, findWidth(root, context, nodeName, depthFor));
     this.missingWidth = Math.max(MISSING_COL, findWidth(root, context, nodeMissing));
 
@@ -289,6 +340,9 @@ class TextReport extends ReportBase {
   }
 
   onSummary(node: ReportNode, context: Context): void {
+    if (this.hideTable) {
+      return;
+    }
     const nodeDepth = depthFor(node);
     const row = tableRow(
       node,
@@ -310,7 +364,9 @@ class TextReport extends ReportBase {
   }
 
   onEnd(): void {
-    this.cw!.println(makeLine(this.nameWidth, this.missingWidth));
+    if (!this.hideTable) {
+      this.cw!.println(makeLine(this.nameWidth, this.missingWidth));
+    }
     this.cw!.close();
   }
 }

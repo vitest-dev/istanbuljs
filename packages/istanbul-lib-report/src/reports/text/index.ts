@@ -218,11 +218,16 @@ function hiddenTableCounts(
   root.visit(
     context.getVisitor({
       onDetail(node) {
-        counts[skipReason(node.getCoverageSummary()!, skipEmpty, skipFull) ?? "shown"] += 1;
+        const metrics = node.getCoverageSummary()!;
+
+        if (!skipReason(metrics, skipEmpty, skipFull)) counts.shown += 1;
+        // empty files are hidden by `skipFull` too, but they are not "fully covered"
+        else if (metrics.isEmpty()) counts.empty += 1;
+        else counts.full += 1;
       },
     }),
   );
-  return counts.shown === 0 && counts.full > 0 ? counts : null;
+  return counts.shown === 0 && counts.full + counts.empty > 0 ? counts : null;
 }
 
 function fileNoun(count: number): string {
@@ -303,7 +308,9 @@ class TextReport extends ReportBase {
     this.hideTable = counts !== null;
     if (counts) {
       this.cw.println("No files with missing coverage.");
-      this.cw.println(`${counts.full} ${fileNoun(counts.full)} fully covered.`);
+      if (counts.full > 0) {
+        this.cw.println(`${counts.full} ${fileNoun(counts.full)} fully covered.`);
+      }
       if (counts.empty > 0) {
         this.cw.println(`${counts.empty} empty ${fileNoun(counts.empty)} skipped.`);
       }

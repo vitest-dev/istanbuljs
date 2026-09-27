@@ -36,10 +36,13 @@
     "test": "pnpm --filter @vitest/istanbuljs-monorepo run test --project @vitest/istanbul-lib-report"
   },
   "dependencies": {
-    "@vitest/istanbul-lib-coverage": "workspace:*"
+    "@vitest/istanbul-lib-coverage": "workspace:*",
+    "picomatch": "catalog:"
   },
   "devDependencies": {
+    "@types/picomatch": "catalog:",
     "@vitest/browser-playwright": "catalog:",
+    "@vitest/istanbul-report-html-modern": "workspace:*",
     "playwright": "catalog:",
     "preact": "catalog:",
     "tsdown": "catalog:"

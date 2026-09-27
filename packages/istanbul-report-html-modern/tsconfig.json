@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": ["vite/client"],
+    "paths": {
+      "@vitest/istanbul-report-html-modern": ["./src/index.ts"],
+      "@vitest/istanbul-report-html-modern/style.css": ["./src/index.css"]
+    }
+  },
+  "include": [
+    "src",
+    "playground/src",
+    "test",
+    "vite.config.ts",
+    "vite.config.playground.ts",
+    "vite-plugin-report-data-dev.ts",
+    "report-data-placeholder.ts",
+    "tsdown.config.ts",
+    "vitest.config.ts"
+  ],
+  "exclude": ["dist", "node_modules"]
+}

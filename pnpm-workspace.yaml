@@ -5,6 +5,9 @@ cleanupUnusedCatalogs: true
 ignoreWorkspaceRootCheck: true
 shellEmulator: true
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  # Transitive dep of @babel/core@7.x; predates npm provenance (false positive)
+  - semver@6.3.1
 allowBuilds:
   "fsevents": true
 packages:
@@ -12,6 +15,7 @@ packages:
 catalog:
   "@types/node": ^26.2.0
   tsdown: ^0.22.14
+  "@tsdown/css": ^0.22.14
   "@babel/core": ^8.0.1
   "@babel/parser": ^8.0.4
   "@istanbuljs/schema": ^0.1.3
@@ -28,6 +32,18 @@ catalog:
   typescript: ^7.0.2
   "@e18e/eslint-plugin": ^0.8.0
   changelogithub: ^15.0.4
+  vite: ^8.2.2
+  vite-plugin-singlefile: ^2.3.3
+  picomatch: ^4.0.7
+  "@types/picomatch": ^4.0.3
+  lucide-preact: ^1.28.0
+  "@preact/preset-vite": ^2.10.2
+  "@codemirror/lang-javascript": ^6.2.4
+  "@codemirror/language": ^6.11.3
+  "@codemirror/state": ^6.5.2
+  "@codemirror/theme-one-dark": ^6.1.3
+  "@codemirror/view": ^6.38.6
+
 minimumReleaseAgeExclude:
   - "@vitest/browser-playwright@5.0.0"
   - "@vitest/browser@5.0.0"

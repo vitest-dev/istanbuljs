@@ -24,7 +24,7 @@
     "test": "vitest",
     "fmt": "oxfmt",
     "lint": "oxlint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && pnpm -r --if-present run typecheck"
   },
   "devDependencies": {
     "@e18e/eslint-plugin": "catalog:",

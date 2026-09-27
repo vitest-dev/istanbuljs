@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>report-html</title>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("istanbul-html-modern-theme");
+          if (theme !== "light" && theme !== "dark") {
+            theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.dataset.theme = theme;
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      window.reportData = __REPORT_DATA__;
+    </script>
+    <script type="module" src="/main.tsx"></script>
+  </body>
+</html>

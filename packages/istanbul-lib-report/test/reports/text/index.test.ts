@@ -66,6 +66,9 @@ describe("TextReport", () => {
     const tree = context.getTree("pkg");
     const report = new TextReport({ ...fixture.opts, skipFull: true });
     tree.visit(report, context);
-    assert.equal(FileWriter.getOutput(), "All 1 files fully covered\n");
+    assert.equal(
+      FileWriter.getOutput(),
+      "No files with missing coverage.\n1 file fully covered.\n",
+    );
   });
 });

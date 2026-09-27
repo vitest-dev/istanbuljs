@@ -199,8 +199,9 @@ function skipFullTableStats(
   context: Context,
   skipEmpty: boolean | undefined,
   skipFull: boolean | undefined,
-): { hideTable: boolean; fullFileCount: number } {
+): { hideTable: boolean; fullFileCount: number; emptyFileCount: number } {
   let fullFileCount = 0;
+  let emptyFileCount = 0;
   let incompleteFiles = 0;
 
   function inspect(node: ReportNode) {
@@ -212,6 +213,7 @@ function skipFullTableStats(
       return;
     }
     if (skipEmpty && metrics.isEmpty()) {
+      emptyFileCount += 1;
       return;
     }
     if (isFull(metrics)) {
@@ -231,7 +233,12 @@ function skipFullTableStats(
   return {
     hideTable: Boolean(skipFull) && incompleteFiles === 0 && fullFileCount > 0,
     fullFileCount,
+    emptyFileCount,
   };
+}
+
+function fileNoun(count: number): string {
+  return count === 1 ? "file" : "files";
 }
 
 function tableRow(
@@ -307,7 +314,7 @@ class TextReport extends ReportBase {
 
   onStart(root: ReportNode, context: Context): void {
     this.cw = context.writer.writeFile(this.file);
-    const { hideTable, fullFileCount } = skipFullTableStats(
+    const { hideTable, fullFileCount, emptyFileCount } = skipFullTableStats(
       root,
       context,
       this.skipEmpty,
@@ -315,7 +322,11 @@ class TextReport extends ReportBase {
     );
     this.hideTable = hideTable;
     if (this.hideTable) {
-      this.cw.println(`All ${fullFileCount} files fully covered`);
+      this.cw.println("No files with missing coverage.");
+      this.cw.println(`${fullFileCount} ${fileNoun(fullFileCount)} fully covered.`);
+      if (emptyFileCount > 0) {
+        this.cw.println(`${emptyFileCount} empty ${fileNoun(emptyFileCount)} skipped.`);
+      }
       return;
     }
     this.nameWidth = Math.max(NAME_COL, findWidth(root, context, nodeName, depthFor));

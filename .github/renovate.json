@@ -26,8 +26,11 @@
     {
       "matchUpdateTypes": ["major"],
       "groupName": "vitest",
-      "matchPackagePatterns": ["^@vitest", "^vitest"],
-      "description": "Vitest majors"
+      "description": "Vitest majors",
+      "matchPackageNames": [
+        "/^@vitest/",
+        "/^vitest/"
+      ]
     },
     {
       "description": "Node version is managed manually",

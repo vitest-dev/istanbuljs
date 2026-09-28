@@ -28,6 +28,11 @@
       "groupName": "vitest",
       "matchPackagePatterns": ["^@vitest", "^vitest"],
       "description": "Vitest majors"
+    },
+    {
+      "description": "Node version is managed manually",
+      "matchPackageNames": ["node"],
+      "enabled": false
     }
   ]
 }

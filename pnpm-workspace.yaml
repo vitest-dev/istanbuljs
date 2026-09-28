@@ -10,24 +10,24 @@ allowBuilds:
 packages:
   - packages/*
 catalog:
-  "@types/node": ^26.2.0
-  tsdown: ^0.22.14
-  "@babel/core": ^8.0.1
-  "@babel/parser": ^8.0.4
-  "@istanbuljs/schema": ^0.1.3
-  "@jridgewell/trace-mapping": ^0.3.23
-  obug: ^2.1.4
-  oxfmt: ^0.64.0
-  oxlint: ^1.79.0
+  "@types/node": ^26.6.3
+  tsdown: ^0.23.0
+  "@babel/core": ^8.0.6
+  "@babel/parser": ^8.0.6
+  "@istanbuljs/schema": ^0.1.6
+  "@jridgewell/trace-mapping": ^0.3.31
+  obug: ^2.2.1
+  oxfmt: ^0.70.0
+  oxlint: ^1.85.0
   preact: ^10.29.8
-  playwright: ^1.62.1
-  vitest: ^5.0.0
-  yaml: ^2.9.0
-  "@vitest/browser-playwright": ^5.0.0
-  "@vitest/coverage-v8": ^5.0.0
+  playwright: ^1.63.0
+  vitest: ^5.0.2
+  yaml: ^2.9.1
+  "@vitest/browser-playwright": ^5.0.2
+  "@vitest/coverage-v8": ^5.0.2
   typescript: ^7.0.2
-  "@e18e/eslint-plugin": ^0.8.0
-  changelogithub: ^15.0.4
+  "@e18e/eslint-plugin": ^0.8.1
+  changelogithub: ^15.0.5
 minimumReleaseAgeExclude:
   - "@vitest/browser-playwright@5.0.0"
   - "@vitest/browser@5.0.0"

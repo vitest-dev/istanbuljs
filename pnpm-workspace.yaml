@@ -17,8 +17,8 @@ catalog:
   "@istanbuljs/schema": ^0.1.6
   "@jridgewell/trace-mapping": ^0.3.31
   obug: ^2.2.1
-  oxfmt: ^0.70.0
-  oxlint: ^1.85.0
+  oxfmt: ^0.71.0
+  oxlint: ^1.86.0
   preact: ^10.29.8
   playwright: ^1.63.0
   vitest: ^5.0.2

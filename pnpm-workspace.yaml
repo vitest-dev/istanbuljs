@@ -16,7 +16,7 @@ catalog:
   "@babel/parser": ^8.0.6
   "@istanbuljs/schema": ^0.1.6
   "@jridgewell/trace-mapping": ^0.3.31
-  obug: ^2.2.1
+  obug: ^3.0.0
   oxfmt: ^0.71.0
   oxlint: ^1.86.0
   preact: ^10.29.8

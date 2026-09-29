@@ -34,8 +34,8 @@ catalogs:
       specifier: ^15.0.5
       version: 15.0.5
     obug:
-      specifier: ^2.2.1
-      version: 2.2.1
+      specifier: ^3.0.0
+      version: 3.0.0
     oxfmt:
       specifier: ^0.71.0
       version: 0.71.0
@@ -158,7 +158,7 @@ importers:
         version: link:../istanbul-lib-coverage
       obug:
         specifier: 'catalog:'
-        version: 2.2.1
+        version: 3.0.0
     devDependencies:
       tsdown:
         specifier: 'catalog:'
@@ -1485,10 +1485,6 @@ packages:
 
   obug@2.1.4:
     resolution: {integrity: sha512-4a+OsYv9UktOJKE+l1A4OufDgdRF9PifWj+tJnHURo/P+WOxpG4GzUFL9qCalmWauao6ogiG+QvnCovwPoyAWA==}
-    engines: {node: '>=12.20.0'}
-
-  obug@2.2.1:
-    resolution: {integrity: sha512-XrsrhT5sybtKI6wakr2SPOlGZWWYbUXZ7a0jT8/QOeAPau+1X/bSegNe5YR75oJmEZQbKningirmGOEJCIk61Q==}
     engines: {node: '>=12.20.0'}
 
   obug@3.0.0:
@@ -2848,8 +2844,6 @@ snapshots:
       ufo: 1.6.4
 
   obug@2.1.4: {}
-
-  obug@2.2.1: {}
 
   obug@3.0.0: {}
 

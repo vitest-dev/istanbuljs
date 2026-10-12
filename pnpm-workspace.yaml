@@ -10,21 +10,21 @@ allowBuilds:
 packages:
   - packages/*
 catalog:
-  "@types/node": ^26.6.3
-  tsdown: ^0.23.0
-  "@babel/core": ^8.0.6
-  "@babel/parser": ^8.0.6
+  "@types/node": ^26.6.5
+  tsdown: ^0.23.1
+  "@babel/core": ^8.0.7
+  "@babel/parser": ^8.0.7
   "@istanbuljs/schema": ^0.1.6
   "@jridgewell/trace-mapping": ^0.3.31
   obug: ^3.0.0
-  oxfmt: ^0.71.0
-  oxlint: ^1.86.0
+  oxfmt: ^0.72.0
+  oxlint: ^1.87.0
   preact: ^10.29.8
-  playwright: ^1.63.0
-  vitest: ^5.0.2
+  playwright: ^1.64.0
+  vitest: ^5.0.3
   yaml: ^2.9.1
-  "@vitest/browser-playwright": ^5.0.2
-  "@vitest/coverage-v8": ^5.0.2
+  "@vitest/browser-playwright": ^5.0.3
+  "@vitest/coverage-v8": ^5.0.3
   typescript: ^7.0.2
   "@e18e/eslint-plugin": ^0.8.1
   changelogithub: ^15.0.5

@@ -31,7 +31,7 @@
     },
     {
       "description": "Node version is managed manually",
-      "matchPackageNames": ["node"],
+      "matchDepNames": ["node"],
       "enabled": false
     }
   ]

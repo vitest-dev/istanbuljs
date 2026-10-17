@@ -35,15 +35,19 @@
     "test": "pnpm --filter @vitest/istanbuljs-monorepo run test --project @vitest/istanbul-lib-instrument"
   },
   "dependencies": {
-    "@babel/core": "catalog:",
-    "@babel/parser": "catalog:",
     "@istanbuljs/schema": "catalog:",
+    "@jridgewell/remapping": "catalog:",
     "@jridgewell/trace-mapping": "catalog:",
-    "@vitest/istanbul-lib-coverage": "workspace:*"
+    "@vitest/istanbul-lib-coverage": "workspace:*",
+    "magic-string": "catalog:"
   },
   "devDependencies": {
+    "rolldown": "catalog:",
     "tsdown": "catalog:",
     "yaml": "catalog:"
+  },
+  "peerDependencies": {
+    "rolldown": "^1.0.0"
   },
   "engines": {
     "node": ">=22"

@@ -4,8 +4,7 @@ import type { FileCoverageData, FunctionMapping, Range } from "@vitest/istanbul-
 
 /**
  * an input source map, mapping the code being instrumented back to its
- * original source. Loosened to `object` compatibility at the babel boundary;
- * the encoded source map shape is what the instrumenter understands.
+ * original source.
  */
 export type InputSourceMap = EncodedSourceMap;
 

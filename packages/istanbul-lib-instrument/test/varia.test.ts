@@ -1,3 +1,5 @@
+import { originalPositionFor, TraceMap } from "@jridgewell/trace-mapping";
+import MagicString from "magic-string";
 import { assert, describe, it, expect } from "vitest";
 
 import Instrumenter from "../src/instrumenter";
@@ -124,6 +126,57 @@ describe("varia", () => {
     assert(generated);
     expect(generated).toBeTypeOf("string");
     assert(instrumenter.lastSourceMap());
+  });
+
+  describe("combineSourceMaps", () => {
+    // the input code is the original code without its two leading lines
+    const original = "// header\n// header\nconst value = 1;\nconsole.log(value);\n";
+    const input = new MagicString(original);
+    input.remove(0, original.indexOf("const"));
+    const code = input.toString();
+    const inputSourceMap = {
+      ...input.generateMap({ hires: true, source: "original.js", includeContent: true }),
+      version: 3 as const,
+    };
+
+    function instrument(combineSourceMaps?: boolean) {
+      const instrumenter = new Instrumenter({ produceSourceMap: true, combineSourceMaps });
+      const generated = instrumenter.instrumentSync(code, "input.js", inputSourceMap);
+      const map = instrumenter.lastSourceMap();
+      assert(map);
+      // the coverage header also contains "console.log" in the input source map
+      const consoleLine = generated.split("\n").findLastIndex((l) => l.includes("console.log"));
+      const position = originalPositionFor(new TraceMap(map as any), {
+        line: consoleLine + 1,
+        column: generated.split("\n")[consoleLine].indexOf("console.log"),
+      });
+      return { map, position, coverage: instrumenter.lastFileCoverage() };
+    }
+
+    it("maps to the original sources by default", () => {
+      const { map, position, coverage } = instrument();
+
+      expect(map.sources).toEqual(["original.js"]);
+      expect(position).toMatchObject({ source: "original.js", line: 4, column: 0 });
+      expect(coverage.inputSourceMap).toBe(inputSourceMap);
+    });
+
+    it("maps to the input code only when disabled", () => {
+      const { map, position, coverage } = instrument(false);
+
+      expect(map.sources).toEqual(["input.js"]);
+      expect(map.sourcesContent).toEqual([code]);
+      expect(position).toMatchObject({ source: "input.js", line: 2, column: 0 });
+      expect(coverage.inputSourceMap).toBe(inputSourceMap);
+    });
+
+    it("produces no source map for already instrumented code when disabled", () => {
+      const instrumenter = new Instrumenter({ produceSourceMap: true, combineSourceMaps: false });
+      const generated = instrumenter.instrumentSync(code, "input.js", inputSourceMap);
+      instrumenter.instrumentSync(generated, "input.js", inputSourceMap);
+
+      expect(instrumenter.lastSourceMap()).toBeNull();
+    });
   });
 
   it("registers source map URLs seen in the original source", () => {

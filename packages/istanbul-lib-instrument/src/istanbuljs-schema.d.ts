@@ -3,8 +3,6 @@
  * this package is declared here, shaped after the actual runtime values.
  */
 declare module "@istanbuljs/schema" {
-  import type { ParserPlugin } from "@babel/parser";
-
   export const defaults: {
     instrumenter: {
       coverageVariable: string;
@@ -13,7 +11,7 @@ declare module "@istanbuljs/schema" {
       ignoreClassMethods: string[];
       autoWrap: boolean;
       esModules: boolean;
-      parserPlugins: ParserPlugin[];
+      parserPlugins: string[];
       compact: boolean;
       preserveComments: boolean;
       produceSourceMap: boolean;

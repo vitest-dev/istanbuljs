@@ -3,7 +3,6 @@ import { defaults } from "@istanbuljs/schema";
 import Instrumenter from "./instrumenter";
 import type { InstrumenterOptions } from "./instrumenter";
 import readInitialCoverage from "./read-coverage";
-import programVisitor from "./visitor";
 
 /**
  * createInstrumenter creates a new instrumenter with the
@@ -17,10 +16,9 @@ function createInstrumenter(opts?: Partial<InstrumenterOptions>): Instrumenter {
 
 const defaultOpts = defaults.instrumenter;
 
-export { createInstrumenter, programVisitor, readInitialCoverage, defaultOpts };
+export { createInstrumenter, readInitialCoverage, defaultOpts };
 
 export type { Instrumenter };
-export type { InstrumenterCallback, InstrumenterOptions } from "./instrumenter";
+export type { InstrumenterCallback, InstrumenterOptions, SourceMap } from "./instrumenter";
 export type { InitialCoverage } from "./read-coverage";
 export type { InputSourceMap, SourceCoverageData } from "./source-coverage";
-export type { VisitorExitResult, VisitorOptions } from "./visitor";

@@ -56,7 +56,7 @@ describe("varia", () => {
     assert(!v.err);
 
     const code = v.getGeneratedCode();
-    assert(code.match(/cov_(.+)\.s\[\d+\]\+\+;export const func=\(\)=>/));
+    assert(code.match(/cov_(.+)\.s\[\d+\]\+\+;export const func = \(\) =>/));
   });
 
   it("honors ignore next for exported functions", () => {
@@ -72,7 +72,7 @@ describe("varia", () => {
     const code = v.getGeneratedCode();
     assert(
       code.match(
-        /return actualCoverage;}cov_[^(]+\(\);export function fn1\(\){}export default function\(\){}/,
+        /return actualCoverage;}cov_[^(]+\(\);\/\* istanbul ignore next\*\/ export function fn1\(\) {}\/\* istanbul ignore next\*\/ export default function\(\) {}$/,
       ),
     );
   });
@@ -89,7 +89,7 @@ describe("varia", () => {
     const code = v.getGeneratedCode();
     assert(
       code.match(
-        /return actualCoverage;}cov_([^(]+)\(\);export function fn1\(\){cov_(.+)\.f\[\d+\]\+\+;}export default function\(\){cov_(.+)\.f\[\d+\]\+\+;}/,
+        /return actualCoverage;}cov_([^(]+)\(\);export function fn1\(\) {cov_(.+)\.f\[\d+\]\+\+;}export default function\(\) {cov_(.+)\.f\[\d+\]\+\+;}/,
       ),
     );
   });

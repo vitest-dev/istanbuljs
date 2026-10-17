@@ -1,19 +1,19 @@
 /*
- Copyright 2012-2015, Yahoo Inc.
- Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
- */
-import { transformSync } from "@babel/core";
-import type { FileResult, InputOptions, NodePath, PluginObject, types as t } from "@babel/core";
-import type { ParserPlugin } from "@babel/parser";
+Copyright 2012-2015, Yahoo Inc.
+Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
+*/
 import { defaults } from "@istanbuljs/schema";
+import remapping from "@jridgewell/remapping";
+import type { EncodedSourceMap } from "@jridgewell/trace-mapping";
+import MagicString from "magic-string";
 
+import { parse } from "./parse";
 import readInitialCoverage from "./read-coverage";
 import type { InputSourceMap, SourceCoverageData } from "./source-coverage";
-import programVisitor from "./visitor";
-import type { VisitorExitResult } from "./visitor";
+import instrumentProgram from "./visitor";
 
-/** source map produced by babel's transform */
-type SourceMap = NonNullable<FileResult["map"]>;
+/** source map produced for the instrumented code */
+export type SourceMap = EncodedSourceMap;
 
 /** options accepted by {@link Instrumenter} and {@link createInstrumenter} */
 export interface InstrumenterOptions {
@@ -21,9 +21,13 @@ export interface InstrumenterOptions {
   coverageVariable: string;
   /** report boolean value of logical expressions (default `false`) */
   reportLogic: boolean;
-  /** preserve comments in output (default `false`) */
+  /**
+   * @deprecated has no effect, comments of the original code are always preserved
+   */
   preserveComments: boolean;
-  /** generate compact code (default `true`) */
+  /**
+   * @deprecated has no effect, the original code is preserved as-is
+   */
   compact: boolean;
   /** set to true to instrument ES6 modules */
   esModules: boolean;
@@ -41,16 +45,14 @@ export interface InstrumenterOptions {
    * and the source map URL.
    */
   sourceMapUrlCallback: ((filename: string, url: string) => void) | null;
-  /** turn debugging on (default `false`) */
+  /**
+   * @deprecated has no effect
+   */
   debug: boolean;
-  /** set babel parser plugins, see @istanbuljs/schema for defaults */
-  parserPlugins: ParserPlugin[];
   /** the global coverage variable scope (default `this`) */
   coverageGlobalScope: string;
   /** use an evaluated function to find coverageGlobalScope (default `true`) */
   coverageGlobalScopeFunc: boolean;
-  /** set babel generator options */
-  generatorOpts?: Record<string, unknown>;
 }
 
 /** callback for the callback-style {@link Instrumenter#instrument} method */
@@ -58,9 +60,8 @@ export type InstrumenterCallback = (error: Error | null, code?: string) => void;
 
 /**
  * Instrumenter is the public API for the instrument library.
- * It is typically used for ES5 code. For ES6 code that you
- * are already running under `babel` use the coverage plugin
- * instead.
+ * The code is parsed with OXC and coverage counters are inserted
+ * into the original code with `magic-string`.
  * @param opts optional. See {@link InstrumenterOptions}.
  */
 class Instrumenter {
@@ -95,67 +96,35 @@ class Instrumenter {
     }
     filename = filename || String(new Date().getTime()) + ".js";
     const { opts } = this;
-    let output: VisitorExitResult | undefined;
-    const babelOpts: InputOptions = {
-      configFile: false,
-      babelrc: false,
-      ast: true,
-      filename: filename || String(new Date().getTime()) + ".js",
-      // trace-mapping allows `sources: (string | null)[]`, babel's types don't — same runtime shape
-      inputSourceMap: inputSourceMap as InputOptions["inputSourceMap"],
-      sourceMaps: opts.produceSourceMap,
-      compact: opts.compact,
-      comments: opts.preserveComments,
-      parserOpts: {
-        allowReturnOutsideFunction: opts.autoWrap,
-        sourceType: opts.esModules ? "module" : "script",
-        plugins: opts.parserPlugins,
-      },
-      generatorOpts: opts.generatorOpts,
-      plugins: [
-        ({ types }: { types: typeof t }): PluginObject => {
-          const ee = programVisitor(types, filename as string, {
-            coverageVariable: opts.coverageVariable,
-            reportLogic: opts.reportLogic,
-            coverageGlobalScope: opts.coverageGlobalScope,
-            coverageGlobalScopeFunc: opts.coverageGlobalScopeFunc,
-            ignoreClassMethods: opts.ignoreClassMethods,
-            ignoreLines: opts.ignoreLines,
-            inputSourceMap,
-          });
+    const { program, comments } = parse(code, filename, opts);
+    const s = new MagicString(code);
 
-          return {
-            visitor: {
-              Program: {
-                enter: ee.enter,
-                exit(path: NodePath<t.Program>) {
-                  output = ee.exit(path);
-                },
-              },
-            },
-          };
-        },
-      ],
-    };
+    const output = instrumentProgram(s, program, comments, filename, {
+      coverageVariable: opts.coverageVariable,
+      reportLogic: opts.reportLogic,
+      coverageGlobalScope: opts.coverageGlobalScope,
+      coverageGlobalScopeFunc: opts.coverageGlobalScopeFunc,
+      ignoreClassMethods: opts.ignoreClassMethods,
+      ignoreLines: opts.ignoreLines,
+      inputSourceMap,
+    });
 
-    const codeMap = transformSync(code, babelOpts)!;
-
-    if (!output || !output.fileCoverage) {
+    if (!output) {
       const initialCoverage =
-        readInitialCoverage(codeMap.ast!) || /* istanbul ignore next: paranoid check */ {};
+        readInitialCoverage(program) || /* istanbul ignore next: paranoid check */ {};
       this.fileCoverage = (initialCoverage as { coverageData?: SourceCoverageData }).coverageData;
       this.sourceMap = inputSourceMap;
       return code;
     }
 
     this.fileCoverage = output.fileCoverage;
-    this.sourceMap = codeMap.map;
+    this.sourceMap = opts.produceSourceMap ? createSourceMap(s, filename, inputSourceMap) : null;
     const cb = this.opts.sourceMapUrlCallback;
     if (cb && output.sourceMappingURL) {
       cb(filename, output.sourceMappingURL);
     }
 
-    return codeMap.code as string;
+    return s.toString();
   }
   /**
    * callback-style instrument method that calls back with an error
@@ -200,6 +169,36 @@ class Instrumenter {
   lastSourceMap(): SourceMap | InputSourceMap | null | undefined {
     return this.sourceMap;
   }
+}
+
+// maps the instrumented code to the input code, and further to the original
+// sources when the input code has a source map
+function createSourceMap(
+  s: MagicString,
+  filename: string,
+  inputSourceMap?: InputSourceMap,
+): SourceMap {
+  const map = s.generateMap({ hires: "boundary", source: filename, includeContent: true });
+  if (!inputSourceMap) {
+    return {
+      version: 3,
+      names: map.names,
+      sources: map.sources,
+      sourcesContent: map.sourcesContent,
+      mappings: map.mappings,
+    };
+  }
+  const remapped = remapping([map as EncodedSourceMap, inputSourceMap], () => null);
+  return {
+    version: 3,
+    names: remapped.names,
+    sources: remapped.sources,
+    sourcesContent: remapped.sourcesContent,
+    mappings: remapped.mappings as string,
+    ...(remapped.ignoreList && remapped.ignoreList.length > 0
+      ? { ignoreList: remapped.ignoreList }
+      : {}),
+  };
 }
 
 export default Instrumenter;

@@ -35,6 +35,13 @@ export interface InstrumenterOptions {
   autoWrap: boolean;
   /** set to true to produce a source map for the instrumented code */
   produceSourceMap: boolean;
+  /**
+   * combine the produced source map with the input source map (default `true`).
+   * Set to `false` to get a source map of the instrumentation step only, e.g. for
+   * bundler plugins whose source maps are combined by the bundler.
+   * The input source map is still stored in the coverage data.
+   */
+  combineSourceMaps: boolean;
   /** set to array of class method names to ignore for coverage */
   ignoreClassMethods: string[];
   /** enable ignore hints for lines (start, stop) (default `false`) */
@@ -97,6 +104,7 @@ class Instrumenter {
     filename = filename || String(new Date().getTime()) + ".js";
     const { opts } = this;
     const { program, comments } = parse(code, filename, opts);
+    const combineSourceMaps = opts.combineSourceMaps !== false;
     const s = new MagicString(code);
 
     const output = instrumentProgram(s, program, comments, filename, {
@@ -113,12 +121,14 @@ class Instrumenter {
       const initialCoverage =
         readInitialCoverage(program) || /* istanbul ignore next: paranoid check */ {};
       this.fileCoverage = (initialCoverage as { coverageData?: SourceCoverageData }).coverageData;
-      this.sourceMap = inputSourceMap;
+      this.sourceMap = combineSourceMaps ? inputSourceMap : null;
       return code;
     }
 
     this.fileCoverage = output.fileCoverage;
-    this.sourceMap = opts.produceSourceMap ? createSourceMap(s, filename, inputSourceMap) : null;
+    this.sourceMap = opts.produceSourceMap
+      ? createSourceMap(s, filename, combineSourceMaps ? inputSourceMap : undefined)
+      : null;
     const cb = this.opts.sourceMapUrlCallback;
     if (cb && output.sourceMappingURL) {
       cb(filename, output.sourceMappingURL);

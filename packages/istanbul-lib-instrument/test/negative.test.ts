@@ -21,6 +21,6 @@ describe("negative tests", () => {
     const v = verifier.create("return 10;", { quiet: true }, { autoWrap: false });
     const err = v.compileError();
     assert(err);
-    assert(err.message.match(/'return' outside/));
+    assert(err.message.match(/'return' statement can only be used within a function body/));
   });
 });

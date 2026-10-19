@@ -2,14 +2,15 @@
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/vitest-dev/istanbuljs/ci.yml?label=CI&logo=GitHub)](https://github.com/vitest-dev/istanbuljs/actions/workflows/ci.yml)
 
-Istanbul instrumenter library, implemented using `Babel`. The implementation is inspired
-by prior art by @dtinth as demonstrated in the `__coverage__` babel plugin.
+Istanbul instrumenter library. The code is parsed with [OXC](https://oxc.rs) (via `rolldown`) and
+coverage counters are inserted into the original code with `magic-string`, so the output keeps the
+original formatting, comments and line numbers.
 
-It provides 2 "modes" of instrumentation.
+```ts
+import { createInstrumenter } from "@vitest/istanbul-lib-instrument";
 
-- An `Instrumenter` API that performs the instrumentation using babel as a library.
-
-- A `programVisitor` function for the Babel AST that can be used by a Babel plugin
-  to emit instrumentation for ES6 code directly without any source map
-  processing. This is the preferred path for babel users. The Babel plugin is
-  called `babel-plugin-istanbul`.
+const instrumenter = createInstrumenter({ esModules: true, produceSourceMap: true });
+const code = instrumenter.instrumentSync(source, filename, inputSourceMap);
+const coverage = instrumenter.lastFileCoverage();
+const map = instrumenter.lastSourceMap();
+```

@@ -33,6 +33,11 @@
       "description": "Node version is managed manually",
       "matchDepNames": ["node"],
       "enabled": false
+    },
+    {
+      "description": "Keep the wide rolldown range, so that it's shared with Vite's own rolldown",
+      "matchPackageNames": ["rolldown"],
+      "enabled": false
     }
   ]
 }

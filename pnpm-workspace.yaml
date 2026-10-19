@@ -15,17 +15,17 @@ catalog:
   "@istanbuljs/schema": ^0.1.6
   "@jridgewell/remapping": ^2.3.5
   "@jridgewell/trace-mapping": ^0.3.31
-  magic-string: ^1.2.3
+  magic-string: ^1.4.3
   rolldown: ^1.0.0
   obug: ^3.0.0
-  oxfmt: ^0.72.0
-  oxlint: ^1.87.0
+  oxfmt: ^0.73.0
+  oxlint: ^1.88.0
   preact: ^10.29.8
-  playwright: ^1.64.0
-  vitest: ^5.0.3
+  playwright: ^1.64.1
+  vitest: ^5.0.5
   yaml: ^2.9.1
-  "@vitest/browser-playwright": ^5.0.3
-  "@vitest/coverage-v8": ^5.0.3
+  "@vitest/browser-playwright": ^5.0.5
+  "@vitest/coverage-v8": ^5.0.5
   typescript: ^7.0.2
   "@e18e/eslint-plugin": ^0.8.1
   changelogithub: ^15.0.5

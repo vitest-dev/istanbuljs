@@ -46,8 +46,8 @@ catalogs:
       specifier: ^1.64.1
       version: 1.64.1
     preact:
-      specifier: ^10.29.8
-      version: 10.29.8
+      specifier: ^11.0.1
+      version: 11.0.1
     rolldown:
       specifier: ^1.0.0
       version: 1.2.13
@@ -149,7 +149,7 @@ importers:
         version: 1.64.1
       preact:
         specifier: 'catalog:'
-        version: 10.29.8
+        version: 11.0.1
       tsdown:
         specifier: 'catalog:'
         version: 0.23.1(typescript@7.0.2)
@@ -1407,10 +1407,10 @@ packages:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
     engines: {node: ^10 || ^12 || >=14}
 
-  preact@10.29.8:
-    resolution: {integrity: sha512-ej2aVZ+vZ8WO7tvlQWRM9N63A0KzF9q4mWJfDUHgYaIofWY9hu74QdnQrjoPMmZi2/nZ5gN0bJCQF49xQqx09Q==}
+  preact@11.0.1:
+    resolution: {integrity: sha512-TNNwEq++jYNHy747LziCjPRVgEwnLSOIOAw/oYcjI3Tdnubx2EXtt76I0an8PATvUWtx/DX1kFIg1eFN+O/fkw==}
     peerDependencies:
-      preact-render-to-string: '>=5'
+      preact-render-to-string: '>=6.7.0'
     peerDependenciesMeta:
       preact-render-to-string:
         optional: true
@@ -2623,7 +2623,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  preact@10.29.8: {}
+  preact@11.0.1: {}
 
   quansync@1.0.0: {}
 

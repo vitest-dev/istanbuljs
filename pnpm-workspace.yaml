@@ -20,7 +20,7 @@ catalog:
   obug: ^3.0.0
   oxfmt: ^0.73.0
   oxlint: ^1.88.0
-  preact: ^10.29.8
+  preact: ^11.0.1
   playwright: ^1.64.1
   vitest: ^5.0.5
   yaml: ^2.9.1

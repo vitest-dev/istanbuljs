@@ -17,11 +17,11 @@ export function getUniqueKey(pathname: string): string {
 export function getOutput(
   cache: Record<string, MappedCoverageEntry>,
 ): Record<string, MappedCoverage> {
-  return Object.values(cache).reduce(
-    (output, { file, mappedCoverage }) => ({
-      ...output,
-      [file]: mappedCoverage,
-    }),
-    {},
-  );
+  const output: Record<string, MappedCoverage> = {};
+
+  for (const { file, mappedCoverage } of Object.values(cache)) {
+    output[file] = mappedCoverage;
+  }
+
+  return output;
 }

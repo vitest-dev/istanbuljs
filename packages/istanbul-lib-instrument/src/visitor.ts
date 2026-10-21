@@ -47,6 +47,8 @@ export interface VisitorOptions {
   ignoreLines: boolean;
   /** the input source map, mapping the uninstrumented code back to the original code */
   inputSourceMap?: InputSourceMap;
+  /** store the input source map in the coverage data (default `true`) */
+  storeInputSourceMap?: boolean;
 }
 
 /** the result returned by {@link instrumentProgram} */
@@ -207,6 +209,7 @@ class VisitState {
     ignoreClassMethods: string[] = [],
     reportLogic = false,
     ignoreLines = false,
+    storeInputSourceMap = true,
   ) {
     this.code = code;
     this.s = s;
@@ -216,8 +219,11 @@ class VisitState {
     this.cov = new SourceCoverage(sourceFilePath);
 
     if (typeof inputSourceMap !== "undefined") {
-      this.cov.inputSourceMap(inputSourceMap);
+      if (storeInputSourceMap) {
+        this.cov.inputSourceMap(inputSourceMap);
+      }
 
+      // ignore hints are read from the sources, so the source map is needed even when not stored
       if (ignoreLines) {
         this.traceMap = new TraceMap(inputSourceMap);
       }
@@ -957,6 +963,7 @@ function instrumentProgram(
     visitorOpts.ignoreClassMethods,
     visitorOpts.reportLogic,
     visitorOpts.ignoreLines,
+    visitorOpts.storeInputSourceMap,
   );
 
   // the rewire plugin (and potentially other middleware)

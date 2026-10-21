@@ -39,9 +39,16 @@ export interface InstrumenterOptions {
    * combine the produced source map with the input source map (default `true`).
    * Set to `false` to get a source map of the instrumentation step only, e.g. for
    * bundler plugins whose source maps are combined by the bundler.
-   * The input source map is still stored in the coverage data.
+   * The input source map is still stored in the coverage data, see `inputSourceMap`.
    */
   combineSourceMaps: boolean;
+  /**
+   * store the input source map in the coverage data (default `true`).
+   * The coverage data is embedded into the instrumented code, so the source map
+   * is a large part of it. When set to `false`, the source map has to be registered
+   * to the `MapStore` with `registerMap` before transforming the coverage.
+   */
+  inputSourceMap: boolean;
   /** set to array of class method names to ignore for coverage */
   ignoreClassMethods: string[];
   /** enable ignore hints for lines (start, stop) (default `false`) */
@@ -115,6 +122,7 @@ class Instrumenter {
       ignoreClassMethods: opts.ignoreClassMethods,
       ignoreLines: opts.ignoreLines,
       inputSourceMap,
+      storeInputSourceMap: opts.inputSourceMap !== false,
     });
 
     if (!output) {

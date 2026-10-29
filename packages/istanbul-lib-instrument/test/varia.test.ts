@@ -179,6 +179,63 @@ describe("varia", () => {
     });
   });
 
+  describe("inputSourceMap", () => {
+    const original = "// header\n// header\nconst value = 1;\nconsole.log(value);\n";
+    const input = new MagicString(original);
+    input.remove(0, original.indexOf("const"));
+    const code = input.toString();
+    const inputSourceMap = {
+      ...input.generateMap({ hires: true, source: "original.js", includeContent: true }),
+      version: 3 as const,
+    };
+
+    function instrument(store?: boolean) {
+      const instrumenter = new Instrumenter({ inputSourceMap: store });
+      const generated = instrumenter.instrumentSync(code, "input.js", inputSourceMap);
+      return { generated, coverage: instrumenter.lastFileCoverage() };
+    }
+
+    it("stores the whole source map by default", () => {
+      const { generated, coverage } = instrument();
+
+      expect(coverage.inputSourceMap).toBe(inputSourceMap);
+      expect(generated).toContain("// header");
+    });
+
+    it("stores the whole source map when enabled", () => {
+      const { coverage } = instrument(true);
+
+      expect(coverage.inputSourceMap).toBe(inputSourceMap);
+    });
+
+    it("stores no source map when disabled", () => {
+      const { generated, coverage } = instrument(false);
+
+      expect(coverage).not.toHaveProperty("inputSourceMap");
+      expect(generated).not.toContain(inputSourceMap.mappings);
+      expect(generated).not.toContain("// header");
+    });
+
+    it("uses the sources content of the source map for ignore hints when disabled", () => {
+      const source =
+        "/* istanbul ignore start */\nconst a = 1;\n/* istanbul ignore stop */\nconst b = 2;\n";
+      const transformed = new MagicString(source);
+      transformed.remove(0, source.indexOf("const"));
+      const map = {
+        ...transformed.generateMap({ hires: true, source: "original.js", includeContent: true }),
+        version: 3 as const,
+      };
+
+      const instrumenter = new Instrumenter({ inputSourceMap: false, ignoreLines: true });
+      instrumenter.instrumentSync(transformed.toString(), "input.js", map);
+      const coverage = instrumenter.lastFileCoverage();
+
+      expect(coverage).not.toHaveProperty("inputSourceMap");
+      expect(Object.keys(coverage.statementMap)).toHaveLength(1);
+      expect(coverage.statementMap[0].start.line).toBe(3);
+    });
+  });
+
   it("registers source map URLs seen in the original source", () => {
     let f = "";
     let u = "";

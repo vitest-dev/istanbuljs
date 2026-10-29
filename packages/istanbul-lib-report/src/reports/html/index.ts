@@ -23,6 +23,9 @@ export interface LinkMapper {
   assetPath(node: ReportNode, name: string): string;
 }
 
+/** color themes of the html report, `legacy` being the classic istanbul colors */
+export type HtmlTheme = "light" | "dark" | "legacy";
+
 /** options accepted by {@link HtmlReport} */
 export interface HtmlOptions {
   /** show extra logging while the report is generated */
@@ -33,11 +36,18 @@ export interface HtmlOptions {
   subdir?: string;
   /** skip nodes with no coverage */
   skipEmpty?: boolean;
+  /**
+   * fixes the report's theme and hides the theme picker; when unset, viewers
+   * pick a theme in the report, which otherwise follows their light/dark
+   * preference, or the page embedding the report, like Vitest UI
+   */
+  theme?: HtmlTheme;
 }
 
 /** data threaded through the header/footer templates while rendering a page */
 interface TemplateData {
   datetime: string;
+  fixedTheme: HtmlTheme | undefined;
   entity: string;
   metrics: CoverageSummary;
   reportClass: string;
@@ -45,6 +55,7 @@ interface TemplateData {
   base: { css: string };
   sorter: { js: string; image: string };
   blockNavigation: { js: string };
+  theme: { js: string };
   prettify: { js: string; css: string };
   favicon: string;
 }
@@ -62,6 +73,17 @@ function classForPercent(context: Context, type: string, pct: Totals["pct"]): st
   return context.classForPercent(type, typeof pct === "number" ? pct : NaN);
 }
 
+const themePickerTemplate = `
+        <label class="theme-select quiet">
+            Theme
+            <select id="themeSelect" autocomplete="off">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="legacy">Legacy</option>
+            </select>
+        </label>
+`;
+
 function htmlHead(details: TemplateData): string {
   return `
 <head>
@@ -71,6 +93,7 @@ function htmlHead(details: TemplateData): string {
     <link rel="stylesheet" href="${html.escape(details.base.css)}" />
     <link rel="shortcut icon" type="image/x-icon" href="${html.escape(details.favicon)}" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    ${details.fixedTheme ? "" : `<script src="${html.escape(details.theme.js)}"></script>`}
     <style type='text/css'>
         .coverage-summary .sorter {
             background-image: url(${html.escape(details.sorter.image)});
@@ -118,11 +141,12 @@ function headerTemplate(details: TemplateData): string {
 
   return `
 <!doctype html>
-<html lang="en">
+<html lang="en"${details.fixedTheme ? ` data-theme="${html.escape(details.fixedTheme)}"` : ""}>
 ${htmlHead(details)}
 <body>
 <div class='wrapper'>
     <div class='pad1'>
+        ${details.fixedTheme ? "" : themePickerTemplate}
         <h1>${details.pathHtml}</h1>
         <div class='clearfix'>
             ${metricsTemplate(details.metrics.statements, "Statements")}
@@ -305,6 +329,7 @@ class HtmlReport extends ReportBase {
   declare subdir: string;
   declare date: string;
   declare skipEmpty: boolean | undefined;
+  declare theme: HtmlTheme | undefined;
 
   constructor(opts: HtmlOptions) {
     super();
@@ -314,6 +339,7 @@ class HtmlReport extends ReportBase {
     this.subdir = opts.subdir || "";
     this.date = new Date().toISOString();
     this.skipEmpty = opts.skipEmpty;
+    this.theme = ["light", "dark", "legacy"].includes(opts.theme!) ? opts.theme : undefined;
   }
 
   getBreadcrumbHtml(node: ReportNode): string {
@@ -352,6 +378,9 @@ class HtmlReport extends ReportBase {
     templateData.blockNavigation = {
       js: linkMapper.assetPath(node, "block-navigation.js"),
     };
+    templateData.theme = {
+      js: linkMapper.assetPath(node, "theme.js"),
+    };
     templateData.prettify = {
       js: linkMapper.assetPath(node, "prettify.js"),
       css: linkMapper.assetPath(node, "prettify.css"),
@@ -360,7 +389,7 @@ class HtmlReport extends ReportBase {
   }
 
   getTemplateData(): TemplateData {
-    return { datetime: this.date } as TemplateData;
+    return { datetime: this.date, fixedTheme: this.theme } as TemplateData;
   }
 
   getWriter(context: Context): FileWriter {

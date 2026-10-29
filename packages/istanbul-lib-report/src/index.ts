@@ -49,7 +49,7 @@ export type { ReportBaseOptions } from "./report-base";
 export type { CloverOptions } from "./reports/clover/index";
 export type { CoberturaOptions } from "./reports/cobertura/index";
 export type { HtmlSpaOptions } from "./reports/html-spa/index";
-export type { HtmlOptions, LinkMapper } from "./reports/html/index";
+export type { HtmlOptions, HtmlTheme, LinkMapper } from "./reports/html/index";
 export type { JsonSummaryOptions } from "./reports/json-summary/index";
 export type { JsonOptions } from "./reports/json/index";
 export type { LcovOptions } from "./reports/lcov/index";

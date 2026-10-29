@@ -13,7 +13,7 @@ import HtmlReport from "../html/index";
 import type { HtmlOptions, LinkMapper } from "../html/index";
 
 /** options accepted by {@link HtmlSpaReport} */
-export interface HtmlSpaOptions extends HtmlOptions {
+export interface HtmlSpaOptions extends Omit<HtmlOptions, "theme"> {
   /** the metrics to show in the report UI, defaults to lines, branches and functions */
   metricsToShow?: ("lines" | "branches" | "functions" | "statements")[];
 }
@@ -89,6 +89,8 @@ class HtmlSpaReport extends ReportBase {
     this.htmlReport.getBreadcrumbHtml = function () {
       return '<a href="javascript:history.back()">Back</a>';
     };
+    // the SPA's own pages are not themed, so its file pages keep matching them
+    this.htmlReport.theme = "legacy";
 
     this.metricsToShow = opts.metricsToShow || ["lines", "branches", "functions"];
   }

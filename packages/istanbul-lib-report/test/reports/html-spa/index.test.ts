@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 
 import * as istanbulLibCoverage from "@vitest/istanbul-lib-coverage";
-import { afterAll as after, afterEach, assert, beforeAll as before, describe, it } from "vitest";
+import { assert, beforeAll, describe, it, onTestFinished } from "vitest";
 
 import * as istanbulLibReport from "../../../src/index";
 import { FileWriter } from "../../../src/index";
@@ -29,12 +29,11 @@ interface WriteOperation {
 type Operation = CopyOperation | WriteOperation;
 
 describe("html-spa", () => {
-  let fileWriterCopyFile: typeof FileWriter.prototype.copyFile;
-  let fileWriterWriteFile: typeof FileWriter.prototype.writeFile;
-  let operations: Operation[] = [];
-  before(() => {
-    fileWriterCopyFile = FileWriter.prototype.copyFile;
-    fileWriterWriteFile = FileWriter.prototype.writeFile;
+  const operations: Operation[] = [];
+
+  beforeAll(() => {
+    const fileWriterCopyFile = FileWriter.prototype.copyFile;
+    const fileWriterWriteFile = FileWriter.prototype.writeFile;
 
     FileWriter.prototype.copyFile = function (source, dest, header) {
       operations.push({
@@ -59,18 +58,19 @@ describe("html-spa", () => {
         close() {},
       } as ContentWriter;
     };
-  });
-  afterEach(() => {
-    operations = [];
-  });
-  after(() => {
-    FileWriter.prototype.copyFile = fileWriterCopyFile;
-    FileWriter.prototype.writeFile = fileWriterWriteFile;
+
+    return () => {
+      FileWriter.prototype.copyFile = fileWriterCopyFile;
+      FileWriter.prototype.writeFile = fileWriterWriteFile;
+    };
   });
 
   function createTest(file: string) {
     const fixture = require(path.resolve(import.meta.dirname, "../fixtures/specs/" + file));
     it(fixture.title, () => {
+      onTestFinished(() => {
+        operations.splice(0);
+      });
       const context = istanbulLibReport.createContext({
         dir: "./",
         coverageMap: istanbulLibCoverage.createCoverageMap(fixture.map),
@@ -108,6 +108,24 @@ describe("html-spa", () => {
             type: "copy",
             source: path.join(
               import.meta.dirname,
+              "../../../src/reports/html/assets/readex-pro-license.txt",
+            ),
+            dest: "./readex-pro-license.txt",
+            header: undefined,
+          },
+          {
+            type: "copy",
+            source: path.join(
+              import.meta.dirname,
+              "../../../src/reports/html/assets/readex-pro.woff2",
+            ),
+            dest: "./readex-pro.woff2",
+            header: undefined,
+          },
+          {
+            type: "copy",
+            source: path.join(
+              import.meta.dirname,
               "../../../src/reports/html/assets/sort-arrow-sprite.png",
             ),
             dest: "./sort-arrow-sprite.png",
@@ -117,6 +135,12 @@ describe("html-spa", () => {
             type: "copy",
             source: path.join(import.meta.dirname, "../../../src/reports/html/assets/sorter.js"),
             dest: "./sorter.js",
+            header: "/* eslint-disable */\n",
+          },
+          {
+            type: "copy",
+            source: path.join(import.meta.dirname, "../../../src/reports/html/assets/theme.js"),
+            dest: "./theme.js",
             header: "/* eslint-disable */\n",
           },
           {

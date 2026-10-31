@@ -93,6 +93,16 @@ function assertValidObject(obj: FileCoverageData): void {
 const keyFromLoc = ({ start, end }: Range): string =>
   `${start.line}|${start.column}|${end.line}|${end.column}`;
 
+// Different transforms of the same source (e.g. SSR vs browser, or different
+// transpilers) can disagree on the end column of a range. One may even leave it
+// as `null`. Used as a fallback when exact location keys don't match.
+const keyFromLocIgnoringEndColumn = (loc: Range | null | undefined): string | null =>
+  loc?.start && loc.end ? `${loc.start.line}|${loc.start.column}|${loc.end.line}` : null;
+
+// Prefer the range with a resolved end column when two matching items are merged
+const hasEndColumn = (loc: Range | null | undefined): boolean =>
+  typeof loc?.end?.column === "number";
+
 const isObj = (o: unknown): o is Record<string, unknown> => !!o && typeof o === "object";
 const isLineCol = (o: unknown): o is Location =>
   isObj(o) && typeof o.line === "number" && typeof o.column === "number";
@@ -190,6 +200,8 @@ const mergeProp = <H extends Hits, T>(
   bHits: Record<string, H>,
   bMap: Record<string, T>,
   itemKey: (item: T) => string = keyFromLoc as unknown as (item: T) => string,
+  fallbackKey?: (item: T) => string | null,
+  preferItem?: (a: T, b: T) => T,
 ): [Record<string, H>, Record<string, T>] => {
   const aItems: Record<string, [Hits | null, T]> = {};
   for (const [key, itemHits] of Object.entries(aHits)) {
@@ -201,17 +213,46 @@ const mergeProp = <H extends Hits, T>(
     const item = bMap[key];
     bItems[itemKey(item)] = [itemHits, item];
   }
+
+  // Pair items that have no exact match by their fallback key. Only unambiguous
+  // one-to-one pairs are merged, so that distinct items are never collapsed.
+  const fallbackPairs = new Map<string, string>(); // a key -> b key
+  const pairedBKeys = new Set<string>();
+  if (fallbackKey) {
+    const group = (items: Record<string, [Hits | null, T]>, others: Record<string, unknown>) => {
+      const groups = new Map<string, string[]>();
+      for (const [key, [, item]] of Object.entries(items)) {
+        if (key in others) continue;
+        const fKey = fallbackKey(item);
+        if (fKey === null) continue;
+        groups.set(fKey, [...(groups.get(fKey) ?? []), key]);
+      }
+      return groups;
+    };
+    const aGroups = group(aItems, bItems);
+    const bGroups = group(bItems, aItems);
+    for (const [fKey, aKeys] of aGroups) {
+      const bKeys = bGroups.get(fKey);
+      if (aKeys.length === 1 && bKeys?.length === 1) {
+        fallbackPairs.set(aKeys[0], bKeys[0]);
+        pairedBKeys.add(bKeys[0]);
+      }
+    }
+  }
+
   const mergedItems: Record<string, [Hits | null, T]> = {};
   for (const [key, aValue] of Object.entries(aItems)) {
     let aItemHits = aValue[0];
-    const aItem = aValue[1];
-    const bValue = bItems[key];
+    let aItem = aValue[1];
+    const pairedKey = fallbackPairs.get(key);
+    const bValue = bItems[key] ?? (pairedKey === undefined ? undefined : bItems[pairedKey]);
     if (!bValue) {
       // not an identified range in b, but might be contained by one
       aItemHits = addNearestContainerHits(aItem, aItemHits, bMap, bHits);
     } else {
       // is an identified range in b, so add the hits together
       aItemHits = addHits(aItemHits, bValue[0]);
+      if (preferItem) aItem = preferItem(aItem, bValue[1]);
     }
     mergedItems[key] = [aItemHits, aItem];
   }
@@ -219,7 +260,7 @@ const mergeProp = <H extends Hits, T>(
   for (const [key, bValue] of Object.entries(bItems)) {
     let bItemHits = bValue[0];
     const bItem = bValue[1];
-    if (mergedItems[key]) continue;
+    if (mergedItems[key] || pairedBKeys.has(key)) continue;
     // not an identified range in b, but might be contained by one
     bItemHits = addNearestContainerHits(bItem, bItemHits, aMap, aHits);
     mergedItems[key] = [bItemHits, bItem];
@@ -408,14 +449,36 @@ class FileCoverage {
       return;
     }
 
-    const [s, statementMap] = mergeProp(this.s, this.statementMap, other.s, other.statementMap);
+    const [s, statementMap] = mergeProp(
+      this.s,
+      this.statementMap,
+      other.s,
+      other.statementMap,
+      keyFromLoc,
+      keyFromLocIgnoringEndColumn,
+      (a, b) => (!hasEndColumn(a) && hasEndColumn(b) ? b : a),
+    );
     this.data.s = s;
     this.data.statementMap = statementMap;
 
     const keyFromLocProp = (x: FunctionMapping) => keyFromLoc(x.loc);
     const keyFromLocationsProp = (x: BranchMapping) => keyFromLoc(x.locations[0]);
 
-    const [f, fnMap] = mergeProp(this.f, this.fnMap, other.f, other.fnMap, keyFromLocProp);
+    // Function body ranges may differ in both start and end column between
+    // transforms, but the declaration (function name) range is stable.
+    const fnFallbackKey = (x: FunctionMapping) =>
+      x.decl?.start && x.decl.end ? keyFromLoc(x.decl) : null;
+    const branchFallbackKey = (x: BranchMapping) => keyFromLocIgnoringEndColumn(x.locations[0]);
+
+    const [f, fnMap] = mergeProp(
+      this.f,
+      this.fnMap,
+      other.f,
+      other.fnMap,
+      keyFromLocProp,
+      fnFallbackKey,
+      (a, b) => (!hasEndColumn(a.loc) && hasEndColumn(b.loc) ? b : a),
+    );
     renameConflictingFns(fnMap);
     this.data.f = f;
     this.data.fnMap = fnMap;
@@ -426,6 +489,7 @@ class FileCoverage {
       other.b,
       other.branchMap,
       keyFromLocationsProp,
+      branchFallbackKey,
     );
     this.data.b = b;
     this.data.branchMap = branchMap;
@@ -439,6 +503,7 @@ class FileCoverage {
         other.bT,
         other.branchMap,
         keyFromLocationsProp,
+        branchFallbackKey,
       );
       this.data.bT = bT;
     }

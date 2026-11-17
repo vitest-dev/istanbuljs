@@ -21,4 +21,4 @@ export { createInstrumenter, readInitialCoverage, defaultOpts };
 export type { Instrumenter };
 export type { InstrumenterCallback, InstrumenterOptions, SourceMap } from "./instrumenter";
 export type { InitialCoverage } from "./read-coverage";
-export type { InputSourceMap, SourceCoverageData } from "./source-coverage";
+export type { DecisionMapping, InputSourceMap, SourceCoverageData } from "./source-coverage";

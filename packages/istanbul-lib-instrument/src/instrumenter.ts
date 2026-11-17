@@ -21,6 +21,8 @@ export interface InstrumenterOptions {
   coverageVariable: string;
   /** report boolean value of logical expressions (default `false`) */
   reportLogic: boolean;
+  /** track modified condition/decision coverage (MC/DC) of logical expressions (default `false`) */
+  mcdc: boolean;
   /**
    * @deprecated has no effect, comments of the original code are always preserved
    */
@@ -117,6 +119,7 @@ class Instrumenter {
     const output = instrumentProgram(s, program, comments, filename, {
       coverageVariable: opts.coverageVariable,
       reportLogic: opts.reportLogic,
+      mcdc: opts.mcdc,
       coverageGlobalScope: opts.coverageGlobalScope,
       coverageGlobalScopeFunc: opts.coverageGlobalScopeFunc,
       ignoreClassMethods: opts.ignoreClassMethods,

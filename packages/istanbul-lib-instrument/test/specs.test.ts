@@ -47,7 +47,9 @@ function loadDocs() {
   return docs;
 }
 
-function generateTests(docs: any[]) {
+// with `mcdc`, the same specs check that the MC/DC instrumentation keeps the code working
+// and does not change the other coverage
+function generateTests(docs: any[], mcdc: boolean) {
   docs.forEach((doc) => {
     const guard: string = doc.guard;
     const guardFns = guards as Record<string, () => boolean>;
@@ -61,7 +63,7 @@ function generateTests(docs: any[]) {
       }
     }
 
-    describe(skipText + doc.file + "/" + (doc.name || "suite"), () => {
+    describe(skipText + (mcdc ? "[mcdc] " : "") + doc.file + "/" + (doc.name || "suite"), () => {
       if (doc.err) {
         it("has errors", () => {
           expect.fail(doc.err);
@@ -81,7 +83,7 @@ function generateTests(docs: any[]) {
             const v = verifier.create(
               doc.code,
               doc.opts || {},
-              doc.instrumentOpts,
+              mcdc ? { ...doc.instrumentOpts, mcdc } : doc.instrumentOpts,
               doc.inputSourceMap,
             );
             const test = structuredClone(t);
@@ -107,4 +109,5 @@ function generateTests(docs: any[]) {
   });
 }
 
-generateTests(loadDocs());
+generateTests(loadDocs(), false);
+generateTests(loadDocs(), true);

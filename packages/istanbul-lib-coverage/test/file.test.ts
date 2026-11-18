@@ -1250,8 +1250,8 @@ describe("findNearestContainer missing loc defense", () => {
   });
 });
 
-describe("merging coverage of different transforms", () => {
-  // Some transforms leave end columns unresolved in source maps
+describe("merging ranges with unknown end columns", () => {
+  // Source maps may leave end columns unresolved as `null`
   const loc = (sl: number, sc: number, el: number, ec: number | null): Range => ({
     start: { line: sl, column: sc },
     end: { line: el, column: ec as number },
@@ -1269,149 +1269,149 @@ describe("merging coverage of different transforms", () => {
       ...data,
     });
 
-  it("merges statements whose end columns differ", () => {
-    /* https://github.com/vitest-dev/vitest/issues/9366
-     *
-     * constants.ts
-     * ```ts
-     * export const COLORS = [
-     *   'red',
-     *   ...
-     * ] as const
-     *
-     * export const SIZES = ['small', 'medium', 'large'] as const
-     * ```
-     */
+  it("merges statements when unknown end columns are on this side", () => {
+    // https://github.com/vitest-dev/vitest/issues/9366
     const jsdom = coverage({
-      statementMap: { "0": loc(1, 22, 7, null), "1": loc(9, 21, 9, null) },
-      s: { "0": 1, "1": 1 },
+      statementMap: {
+        0: loc(1, 22, 7, null),
+        1: loc(9, 21, 9, null),
+        2: loc(11, 22, 15, null),
+      },
+      s: { 0: 1, 1: 1, 2: 0 },
     });
     const browser = coverage({
-      statementMap: { "0": loc(1, 22, 7, 10), "1": loc(9, 21, 9, 58) },
-      s: { "0": 2, "1": 0 },
+      statementMap: {
+        0: loc(1, 22, 7, 10),
+        1: loc(9, 21, 9, 58),
+        2: loc(11, 22, 15, 10),
+      },
+      s: { 0: 2, 1: 0, 2: 0 },
     });
 
     jsdom.merge(browser);
 
-    expect(jsdom.statementMap).toEqual({ "0": loc(1, 22, 7, 10), "1": loc(9, 21, 9, 58) });
-    expect(jsdom.s).toEqual({ "0": 3, "1": 1 });
+    expect(jsdom.statementMap).toEqual({
+      0: loc(1, 22, 7, 10),
+      1: loc(9, 21, 9, 58),
+      2: loc(11, 22, 15, 10),
+    });
+    expect(jsdom.s).toEqual({ 0: 3, 1: 1, 2: 0 });
   });
 
-  it("merges functions whose body ranges differ", () => {
-    /* https://github.com/vitest-dev/vitest/pull/9480#discussion_r2718326878
-     *
-     * math.ts
-     * ```ts
-     * export function sum(a: number, b: number) {
-     *   return a + b
-     * }
-     *
-     * export function subtract(a: number, b: number) {
-     *   return a - b
-     * }
-     * ```
-     *
-     * Function body starts at different columns depending on the transform,
-     * but the declaration ranges match.
-     */
-    const plain = coverage({
-      fnMap: {
-        "0": { name: "sum", decl: loc(1, 16, 1, 20), loc: loc(1, 42, 3, null), line: 1 },
-        "1": { name: "subtract", decl: loc(5, 16, 5, 25), loc: loc(5, 47, 7, null), line: 5 },
-      },
-      f: { "0": 1, "1": 0 },
+  it("merges statements when unknown end columns are on the other side", () => {
+    // https://github.com/vitest-dev/vitest/issues/11921
+    const node = coverage({
+      statementMap: { 0: loc(3, 20, 3, 29), 1: loc(4, 2, 4, null) },
+      s: { 0: 0, 1: 0 },
     });
-    const swc = coverage({
-      fnMap: {
-        "0": { name: "sum", decl: loc(1, 16, 1, 20), loc: loc(1, 40, 3, null), line: 1 },
-        "1": { name: "subtract", decl: loc(5, 16, 5, 25), loc: loc(5, 45, 7, null), line: 5 },
-      },
-      f: { "0": 1, "1": 1 },
+    const browser = coverage({
+      statementMap: { 0: loc(3, 20, 3, null), 1: loc(4, 2, 4, null) },
+      s: { 0: 1, 1: 1 },
     });
 
-    plain.merge(swc);
+    node.merge(browser);
 
-    expect(Object.values(plain.fnMap).map((fn) => fn.name)).toEqual(["sum", "subtract"]);
-    expect(plain.f).toEqual({ "0": 2, "1": 1 });
+    expect(node.statementMap).toEqual({ 0: loc(3, 20, 3, 29), 1: loc(4, 2, 4, null) });
+    expect(node.s).toEqual({ 0: 1, 1: 1 });
   });
 
-  it("merges branches whose end columns differ", () => {
+  it("merges statements whose unknown end columns are Infinity", () => {
+    // Before JSON serialization unknown end columns are `Infinity`, not `null`
+    const jsdom = coverage({
+      statementMap: { 0: loc(1, 22, 7, Infinity), 1: loc(9, 21, 9, Infinity) },
+      s: { 0: 2, 1: 2 },
+    });
+    const browser = coverage({
+      statementMap: { 0: loc(1, 22, 7, 10), 1: loc(9, 21, 9, 58) },
+      s: { 0: 4, 1: 4 },
+    });
+
+    jsdom.merge(browser);
+
+    expect(jsdom.statementMap).toEqual({ 0: loc(1, 22, 7, 10), 1: loc(9, 21, 9, 58) });
+    expect(jsdom.s).toEqual({ 0: 6, 1: 6 });
+  });
+
+  it("does not merge when the match is ambiguous", () => {
     const a = coverage({
-      branchMap: {
-        "0": {
-          type: "if",
-          line: 2,
-          loc: loc(2, 0, 2, null),
-          locations: [loc(2, 0, 2, null), loc(2, 35, 2, null)],
-        },
-      },
-      b: { "0": [1, 0] },
+      statementMap: { 0: loc(1, 0, 1, null) },
+      s: { 0: 1 },
     });
     const b = coverage({
-      branchMap: {
-        "0": {
-          type: "if",
-          line: 2,
-          loc: loc(2, 0, 2, 60),
-          locations: [loc(2, 0, 2, 30), loc(2, 35, 2, 60)],
-        },
-      },
-      b: { "0": [0, 1] },
+      statementMap: { 0: loc(1, 0, 1, 5), 1: loc(1, 0, 1, 9) },
+      s: { 0: 2, 1: 3 },
     });
 
     a.merge(b);
 
-    expect(Object.keys(a.branchMap)).toHaveLength(1);
-    expect(a.b).toEqual({ "0": [1, 1] });
+    expect(a.statementMap).toEqual({
+      0: loc(1, 0, 1, null),
+      1: loc(1, 0, 1, 5),
+      2: loc(1, 0, 1, 9),
+    });
+    expect(a.s).toEqual({ 0: 1, 1: 2, 2: 3 });
   });
 
-  it("does not collapse distinct items that share a start location", () => {
+  it("does not merge into a range that already has an exact match", () => {
     const a = coverage({
-      statementMap: { "0": loc(1, 0, 1, 50) },
-      s: { "0": 5 },
+      statementMap: { 0: loc(1, 0, 1, 5), 1: loc(1, 0, 1, null) },
+      s: { 0: 1, 1: 2 },
     });
     const b = coverage({
-      statementMap: { "0": loc(1, 0, 1, 99), "1": loc(1, 0, 1, 88) },
-      s: { "0": 3, "1": 7 },
+      statementMap: { 0: loc(1, 0, 1, 5) },
+      s: { 0: 3 },
     });
 
     a.merge(b);
 
-    // Ambiguous match: keep all items instead of dropping hits
-    expect(Object.keys(a.statementMap)).toHaveLength(3);
-    expect(a.s).toEqual({ "0": 12, "1": 3, "2": 7 });
+    expect(a.statementMap).toEqual({ 0: loc(1, 0, 1, 5), 1: loc(1, 0, 1, null) });
+    expect(a.s).toEqual({ 0: 4, 1: 2 });
   });
 
-  it("merges identical ranges that have unresolved end columns", () => {
+  it("does not merge ranges whose end lines differ", () => {
     const a = coverage({
-      statementMap: { "0": loc(2, 2, 2, null), "1": loc(6, 2, 6, null) },
-      s: { "0": 1, "1": 0 },
+      statementMap: { 0: loc(1, 0, 2, null) },
+      s: { 0: 1 },
     });
     const b = coverage({
-      statementMap: { "0": loc(2, 2, 2, null), "1": loc(6, 2, 6, null) },
-      s: { "0": 0, "1": 1 },
+      statementMap: { 0: loc(1, 0, 3, 1) },
+      s: { 0: 1 },
     });
 
     a.merge(b);
 
-    expect(a.statementMap).toEqual({ "0": loc(2, 2, 2, null), "1": loc(6, 2, 6, null) });
-    expect(a.s).toEqual({ "0": 1, "1": 1 });
+    expect(Object.keys(a.statementMap)).toHaveLength(2);
   });
 
-  it("does not throw on functions without declaration ranges", () => {
-    const a = coverage({
-      fnMap: {
-        "0": { name: "fn", loc: loc(1, 0, 3, 1), line: 1 } as FileCoverageData["fnMap"][string],
-      },
-      f: { "0": 1 },
+  it("merges functions with unknown end columns", () => {
+    const fn = (ec: number | null) => ({
+      name: "greet",
+      decl: loc(2, 16, 2, 21),
+      loc: loc(2, 24, 5, ec),
+      line: 2,
     });
-    const b = coverage({
-      fnMap: {
-        "0": { name: "fn", loc: loc(1, 2, 3, 1), line: 1 } as FileCoverageData["fnMap"][string],
-      },
-      f: { "0": 1 },
-    });
+    const a = coverage({ fnMap: { 0: fn(null) }, f: { 0: 1 } });
+    const b = coverage({ fnMap: { 0: fn(1) }, f: { 0: 2 } });
 
-    expect(() => a.merge(b)).not.toThrow();
+    a.merge(b);
+
+    expect(a.fnMap).toEqual({ 0: fn(1) });
+    expect(a.f).toEqual({ 0: 3 });
+  });
+
+  it("merges branches with unknown end columns", () => {
+    const branch = (ec: number | null, ec2: number | null) => ({
+      type: "if",
+      line: 2,
+      loc: loc(2, 0, 2, ec2),
+      locations: [loc(2, 0, 2, ec), loc(2, 35, 2, ec2)],
+    });
+    const a = coverage({ branchMap: { 0: branch(null, null) }, b: { 0: [1, 0] } });
+    const b = coverage({ branchMap: { 0: branch(30, 60) }, b: { 0: [0, 1] } });
+
+    a.merge(b);
+
+    expect(a.branchMap).toEqual({ 0: branch(30, 60) });
+    expect(a.b).toEqual({ 0: [1, 1] });
   });
 });

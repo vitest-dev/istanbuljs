@@ -184,6 +184,44 @@ const addNearestContainerHits = (
   }
 };
 
+// Source maps may leave the end column of a range unresolved, e.g. Vite's SSR vs. client
+// transforms of the same file. In memory it's `Infinity`, which becomes `null` once
+// serialized as JSON. Treat both as unknown: match it with the single item in `others`
+// that has the same start position and end line.
+const hasUnknownEndColumn = (key: string): boolean =>
+  key.endsWith("|Infinity") || key.endsWith("|null");
+
+const resolveUnknownEndColumns = <V extends [Hits | null, unknown]>(
+  items: Record<string, V>,
+  others: Record<string, V>,
+): Record<string, V> => {
+  // "start.line|start.column|end.line" -> key in others, or null when ambiguous
+  const candidates = new Map<string, string | null>();
+
+  for (const key of Object.keys(others)) {
+    const prefix = key.slice(0, key.lastIndexOf("|"));
+    candidates.set(prefix, candidates.has(prefix) ? null : key);
+  }
+
+  const resolved: Record<string, V> = {};
+
+  for (const [key, value] of Object.entries(items)) {
+    const match =
+      hasUnknownEndColumn(key) && !(key in others)
+        ? candidates.get(key.slice(0, key.lastIndexOf("|")))
+        : null;
+
+    if (match && !(match in items)) {
+      // Use the resolved range from the other side
+      resolved[match] = [value[0], others[match][1]] as V;
+    } else {
+      resolved[key] = value;
+    }
+  }
+
+  return resolved;
+};
+
 const mergeProp = <H extends Hits, T>(
   aHits: Record<string, H>,
   aMap: Record<string, T>,
@@ -191,16 +229,29 @@ const mergeProp = <H extends Hits, T>(
   bMap: Record<string, T>,
   itemKey: (item: T) => string = keyFromLoc as unknown as (item: T) => string,
 ): [Record<string, H>, Record<string, T>] => {
-  const aItems: Record<string, [Hits | null, T]> = {};
+  let hasUnknownEndColumns = false;
+
+  let aItems: Record<string, [Hits | null, T]> = {};
   for (const [key, itemHits] of Object.entries(aHits)) {
     const item = aMap[key];
-    aItems[itemKey(item)] = [itemHits, item];
+    const itemKeyStr = itemKey(item);
+    hasUnknownEndColumns ||= hasUnknownEndColumn(itemKeyStr);
+    aItems[itemKeyStr] = [itemHits, item];
   }
-  const bItems: Record<string, [Hits | null, T]> = {};
+
+  let bItems: Record<string, [Hits | null, T]> = {};
   for (const [key, itemHits] of Object.entries(bHits)) {
     const item = bMap[key];
-    bItems[itemKey(item)] = [itemHits, item];
+    const itemKeyStr = itemKey(item);
+    hasUnknownEndColumns ||= hasUnknownEndColumn(itemKeyStr);
+    bItems[itemKeyStr] = [itemHits, item];
   }
+
+  if (hasUnknownEndColumns) {
+    aItems = resolveUnknownEndColumns(aItems, bItems);
+    bItems = resolveUnknownEndColumns(bItems, aItems);
+  }
+
   const mergedItems: Record<string, [Hits | null, T]> = {};
   for (const [key, aValue] of Object.entries(aItems)) {
     let aItemHits = aValue[0];

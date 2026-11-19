@@ -14,6 +14,24 @@ export type InputSourceMap = EncodedSourceMap;
  */
 export interface SourceCoverageData extends FileCoverageData {
   inputSourceMap?: InputSourceMap;
+  /** MC/DC decisions; only present when `mcdc` is enabled */
+  decisionMap?: Record<string, DecisionMapping>;
+  /** hit counts of the MC/DC test vectors of each decision; only present when `mcdc` is enabled */
+  d?: Record<string, number[]>;
+}
+
+/** metadata for a single MC/DC decision in the instrumented source */
+export interface DecisionMapping {
+  /** location of the whole decision */
+  loc: Range;
+  /** locations of the conditions of the decision, in evaluation order */
+  conditions: Range[];
+  /**
+   * the test vectors the decision can evaluate, indexed like the hit counts.
+   * One character per condition: `T` (truthy), `F` (falsy) or `-` (not evaluated).
+   * The outcome of the decision is the value of the last evaluated condition.
+   */
+  vectors: string[];
 }
 
 function cloneLocation(loc?: Range | null): Range {
@@ -40,17 +58,22 @@ function cloneLocation(loc?: Range | null): Range {
  */
 class SourceCoverage extends classes.FileCoverage {
   declare data: SourceCoverageData;
-  meta: { last: { s: number; f: number; b: number } };
+  meta: { last: { s: number; f: number; b: number; d: number } };
 
-  constructor(pathOrObj: string | FileCoverageData) {
+  constructor(pathOrObj: string | FileCoverageData, mcdc = false) {
     super(pathOrObj);
     this.meta = {
       last: {
         s: 0,
         f: 0,
         b: 0,
+        d: 0,
       },
     };
+    if (mcdc) {
+      this.data.decisionMap = {};
+      this.data.d = {};
+    }
   }
 
   newStatement(loc: Range): number {
@@ -129,6 +152,20 @@ class SourceCoverage extends classes.FileCoverage {
       return;
     }
     countsTrue.push(0);
+  }
+
+  newDecision(loc: Range, conditions: Range[], vectors: string[]): number {
+    const d = this.meta.last.d;
+
+    this.data.decisionMap![d] = {
+      loc: cloneLocation(loc),
+      conditions: conditions.map(cloneLocation),
+      vectors,
+    };
+    this.data.d![d] = vectors.map(() => 0);
+    this.meta.last.d += 1;
+
+    return d;
   }
 
   /**

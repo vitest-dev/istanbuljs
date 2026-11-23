@@ -18,14 +18,14 @@ catalog:
   magic-string: ^1.4.5
   rolldown: ^1.0.0
   obug: ^3.0.0
-  oxfmt: ^0.77.0
-  oxlint: ^1.92.0
+  oxfmt: ^0.79.0
+  oxlint: ^1.94.0
   preact: ^11.2.0
-  playwright: ^1.65.0
-  vitest: ^5.1.0
+  playwright: ^1.65.1
+  vitest: ^5.1.1
   yaml: ^2.9.1
-  "@vitest/browser-playwright": ^5.1.0
-  "@vitest/coverage-v8": ^5.1.0
+  "@vitest/browser-playwright": ^5.1.1
+  "@vitest/coverage-v8": ^5.1.1
   typescript: ^7.0.2
   "@e18e/eslint-plugin": ^0.8.1
   changelogithub: ^15.0.5

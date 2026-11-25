@@ -18,6 +18,8 @@ import CloverReport from "./reports/clover/index";
 import type { CloverOptions } from "./reports/clover/index";
 import CoberturaReport from "./reports/cobertura/index";
 import type { CoberturaOptions } from "./reports/cobertura/index";
+import GithubActionsReport from "./reports/github-actions/index";
+import type { GithubActionsOptions } from "./reports/github-actions/index";
 import HtmlSpaReport from "./reports/html-spa/index";
 import type { HtmlSpaOptions } from "./reports/html-spa/index";
 import HtmlReport from "./reports/html/index";
@@ -48,6 +50,7 @@ export type { ContentWriter, ConsoleWriter, FileContentWriter } from "./file-wri
 export type { ReportBaseOptions } from "./report-base";
 export type { CloverOptions } from "./reports/clover/index";
 export type { CoberturaOptions } from "./reports/cobertura/index";
+export type { GithubActionsOptions } from "./reports/github-actions/index";
 export type { HtmlSpaOptions } from "./reports/html-spa/index";
 export type { HtmlOptions, HtmlTheme, LinkMapper } from "./reports/html/index";
 export type { JsonSummaryOptions } from "./reports/json-summary/index";
@@ -96,6 +99,7 @@ export { FileWriter };
 const reports = {
   clover: CloverReport,
   cobertura: CoberturaReport,
+  "github-actions": GithubActionsReport,
   html: HtmlReport,
   "html-spa": HtmlSpaReport,
   json: JsonReport,
@@ -113,6 +117,7 @@ const reports = {
 export interface ReportOptions {
   clover: CloverOptions;
   cobertura: CoberturaOptions;
+  "github-actions": GithubActionsOptions;
   html: HtmlOptions;
   "html-spa": HtmlSpaOptions;
   json: JsonOptions;

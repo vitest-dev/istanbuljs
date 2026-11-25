@@ -8,16 +8,23 @@ import ReportBase from "../../report-base";
 export interface GithubActionsOptions {
   /** the file to write the workflow commands to, defaults to the console */
   file?: string | null;
+  /**
+   * the annotation level, defaults to `warning`. Reports run before coverage
+   * thresholds are checked, so the level cannot follow the threshold result;
+   * use `error` when every uncovered line fails the build, as with 100% thresholds.
+   */
+  level?: "notice" | "warning" | "error";
 }
 
 /**
- * Prints one GitHub Actions `::error` workflow command per file with uncovered
+ * Prints one GitHub Actions annotation workflow command per file with uncovered
  * statements, functions or branches. The annotation is anchored at the file's
  * first uncovered line and its message lists every uncovered line, so a file
- * takes a single slot of the 10 error annotations GitHub shows per step.
+ * takes a single slot of the 10 annotations per level GitHub shows per step.
  */
 class GithubActionsReport extends ReportBase {
   declare file: string | null;
+  declare level: "notice" | "warning" | "error";
   declare cw: ContentWriter | null;
 
   constructor(opts?: GithubActionsOptions) {
@@ -25,6 +32,7 @@ class GithubActionsReport extends ReportBase {
 
     opts = opts || {};
     this.file = opts.file || null;
+    this.level = opts.level || "warning";
     this.cw = null;
   }
 
@@ -40,7 +48,8 @@ class GithubActionsReport extends ReportBase {
     }
 
     this.cw!.println(
-      formatError(
+      formatCommand(
+        this.level,
         { file: fileCoverage.path, line: String(lines[0]), title: "Uncovered code" },
         `Uncovered ${lineRanges(lines)}`,
       ),
@@ -89,13 +98,17 @@ function lineRanges(lines: number[]): string {
   return `${lines.length === 1 ? "line" : "lines"} ${text.join(", ")}`;
 }
 
-// workflow command format, matching Vitest's `github-actions` test reporter:
+// annotation workflow command format, matching Vitest's `github-actions` test reporter:
 // https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#setting-an-error-message
-function formatError(properties: Record<string, string>, message: string): string {
+function formatCommand(
+  command: string,
+  properties: Record<string, string>,
+  message: string,
+): string {
   const props = Object.entries(properties)
     .map(([key, value]) => `${key}=${escapeProperty(value)}`)
     .join(",");
-  return `::error ${props}::${escapeData(message)}`;
+  return `::${command} ${props}::${escapeData(message)}`;
 }
 
 function escapeData(s: string): string {

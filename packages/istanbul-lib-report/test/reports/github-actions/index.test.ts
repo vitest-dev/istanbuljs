@@ -77,9 +77,9 @@ describe("github-actions report", () => {
 
   it("escapes workflow command separators in the file path", () => {
     const output = report([
-      fileCoverage("C:\\repo\\a,b%.ts", { statementMap: { 0: range(2) }, s: { 0: 0 } }),
+      fileCoverage("C:\\repo\\a,b%\r\n.ts", { statementMap: { 0: range(2) }, s: { 0: 0 } }),
     ]);
 
-    expect(output).toContain("file=C%3A\\repo\\a%2Cb%25.ts,line=2");
+    expect(output).toContain("file=C%3A\\repo\\a%2Cb%25%0D%0A.ts,line=2");
   });
 });

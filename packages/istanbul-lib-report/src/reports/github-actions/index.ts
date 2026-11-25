@@ -20,7 +20,7 @@ export interface GithubActionsOptions {
  * Prints one GitHub Actions annotation workflow command per file with uncovered
  * lines, branches or functions. The annotation is anchored at the file's first
  * uncovered line and its message lists every uncovered line, so a file takes a
- * single slot of the 10 annotations per level GitHub shows per step.
+ * single slot of the 10 warning or 10 error annotations GitHub shows per step.
  */
 class GithubActionsReport extends ReportBase {
   declare file: string | null;

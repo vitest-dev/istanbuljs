@@ -57,6 +57,22 @@ describe("github-actions report", () => {
     expect(output).toContain("::Uncovered lines 9, 21");
   });
 
+  it("anchors an uncovered implicit else at its if statement", () => {
+    const implicitElse = { start: {}, end: {} } as ReturnType<typeof range>;
+    const output = report(
+      fileCoverage("/repo/src/guard.ts", {
+        statementMap: { 0: range(30) },
+        s: { 0: 1 },
+        branchMap: {
+          0: { type: "if", line: 31, loc: range(31), locations: [range(32), implicitElse] },
+        },
+        b: { 0: [4, 0] },
+      }),
+    );
+
+    expect(output).toContain("::Uncovered line 31");
+  });
+
   it("prints nothing for fully covered files", () => {
     const output = report(
       fileCoverage("/repo/src/covered.ts", { statementMap: { 0: range(1) }, s: { 0: 1 } }),

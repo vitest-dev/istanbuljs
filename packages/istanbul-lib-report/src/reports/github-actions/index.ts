@@ -65,7 +65,8 @@ function uncoveredLines(fc: FileCoverage): number[] {
   for (const [id, paths] of Object.entries(fc.b)) {
     const branch = fc.branchMap[id]!;
     paths.forEach((hits, i) => {
-      if (hits === 0) lines.add((branch.locations[i] ?? branch.loc).start.line);
+      // an implicit else has an empty location, so fall back to the branch's own
+      if (hits === 0) lines.add(branch.locations[i]?.start.line ?? branch.loc.start.line);
     });
   }
 

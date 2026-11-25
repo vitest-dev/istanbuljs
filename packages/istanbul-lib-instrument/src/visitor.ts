@@ -30,6 +30,10 @@ const HINT_GAP_RE = /[\s(]/;
 const LINE_TERMINATOR_RE = /\r\n?|[\n\u2028\u2029]/g;
 const IDENTIFIER_RE = /^[A-Za-z_$][\w$]*$/;
 const INDEX_RE = /^(?:0|[1-9]\d*)$/;
+// decisions with more test vectors than this are not instrumented for MC/DC
+const MCDC_MAX_VECTORS = 128;
+// the `next` of an MC/DC condition whose outcome ends the decision
+const DECISION_END = -1;
 
 /** options accepted by {@link instrumentProgram} */
 export interface VisitorOptions {
@@ -37,6 +41,8 @@ export interface VisitorOptions {
   coverageVariable: string;
   /** report boolean value of logical expressions (default `false`) */
   reportLogic: boolean;
+  /** track modified condition/decision coverage (MC/DC) of logical expressions (default `false`) */
+  mcdc: boolean;
   /** the global coverage variable scope (default `this`) */
   coverageGlobalScope: string;
   /** use an evaluated function to find coverageGlobalScope (default `true`) */
@@ -89,6 +95,47 @@ interface SyntheticReturn {
 }
 
 type VisitNode = Node | SyntheticReturn;
+
+/** a condition of an MC/DC decision, see {@link VisitState#coverDecision} */
+interface Condition {
+  node: Node;
+  /** index of the condition evaluated next when this one is truthy, or `DECISION_END` */
+  whenTrue: number;
+  /** index of the condition evaluated next when this one is falsy, or `DECISION_END` */
+  whenFalse: number;
+}
+
+/** the variables declared at the start of a function, static block or program for MC/DC */
+interface ScopeVariables {
+  pos: number;
+  names: Set<string>;
+}
+
+// the `&&` and `||` expressions form MC/DC decisions, `??` is not a boolean operator
+function isDecisionOperator(node: Node | null): node is ESTree.LogicalExpression {
+  return node?.type === "LogicalExpression" && node.operator !== "??";
+}
+
+function isFunction(node: Node): node is ESTree.Function | ESTree.ArrowFunctionExpression {
+  return (
+    node.type === "FunctionDeclaration" ||
+    node.type === "FunctionExpression" ||
+    node.type === "ArrowFunctionExpression"
+  );
+}
+
+function isAnonymousDefinition(node: Node): boolean {
+  if (node.type === "ArrowFunctionExpression") {
+    return true;
+  }
+
+  if (node.type === "FunctionExpression" || node.type === "ClassExpression") {
+    return !node.id;
+  }
+
+  return false;
+}
+
 type VisitFunction = (this: VisitState, node: any) => void;
 
 // generate a variable name from hashing the supplied file path
@@ -193,6 +240,9 @@ class VisitState {
   ignoreClassMethods: string[];
   ignoredLines: Map<string | null, Set<number>>;
   reportLogic: boolean;
+  mcdc: boolean;
+  scopeVariables: Map<Node, ScopeVariables>;
+  terminatedDirectives: Set<number>;
   commentsByEnd: Map<number, Comment>;
   parents: WeakMap<Node, ParentInfo>;
   skipAll: WeakSet<Node>;
@@ -210,13 +260,14 @@ class VisitState {
     reportLogic = false,
     ignoreLines = false,
     storeInputSourceMap = true,
+    mcdc = false,
   ) {
     this.code = code;
     this.s = s;
     this.locator = new Locator(code);
     this.varName = genVar(sourceFilePath);
     this.nextIgnore = null;
-    this.cov = new SourceCoverage(sourceFilePath);
+    this.cov = new SourceCoverage(sourceFilePath, mcdc);
 
     if (typeof inputSourceMap !== "undefined") {
       if (storeInputSourceMap) {
@@ -231,6 +282,9 @@ class VisitState {
     this.ignoreClassMethods = ignoreClassMethods;
     this.ignoredLines = new Map();
     this.reportLogic = reportLogic;
+    this.mcdc = mcdc;
+    this.scopeVariables = new Map();
+    this.terminatedDirectives = new Set();
     this.commentsByEnd = new Map(comments.map((c) => [c.end, c]));
     this.parents = new WeakMap();
     this.skipAll = new WeakSet();
@@ -349,7 +403,7 @@ class VisitState {
     }
   }
 
-  increase(type: string, id: number, index: number | null): string {
+  increase(type: string, id: number, index: number | string | null): string {
     return `${this.varName}().${type}[${id}]` + (index !== null ? `[${index}]` : "") + "++";
   }
 
@@ -376,7 +430,11 @@ class VisitState {
     if (!lastDirective) {
       return body.type === "Program" ? programStart(this.code, body) : body.start + 1;
     }
-    if (this.code[lastDirective.end - 1] !== ";") {
+    if (
+      this.code[lastDirective.end - 1] !== ";" &&
+      !this.terminatedDirectives.has(lastDirective.end)
+    ) {
+      this.terminatedDirectives.add(lastDirective.end);
       this.s.appendLeft(lastDirective.end, ";");
     }
     return lastDirective.end;
@@ -403,7 +461,8 @@ class VisitState {
   // wraps `node` in a sequence expression, e.g. `(cov().s[0]++, node)`
   wrapExpression(node: Node, prefix: string, suffix = ")"): void {
     // an expression statement must not start with "(" after an unterminated statement
-    if (this.expressionStatementStarts.has(node.start)) {
+    // only the outermost of the wrappers starting at the same position needs it
+    if (this.expressionStatementStarts.delete(node.start)) {
       prefix = ";" + prefix;
     }
     this.s.appendRight(node.start, prefix);
@@ -530,6 +589,196 @@ class VisitState {
     } else {
       accumulator.push(node);
     }
+  }
+
+  // the function, static block or program whose `var` declarations `node` can use.
+  // Parameters and class field initializers cannot declare variables, but are
+  // closures of the enclosing scope.
+  varScopeFor(node: Node): Node {
+    let info = this.parents.get(node);
+
+    while (info && info.parent) {
+      const { parent, key } = info;
+      if (
+        parent.type === "Program" ||
+        parent.type === "StaticBlock" ||
+        (isFunction(parent) && key === "body")
+      ) {
+        return parent;
+      }
+
+      info = this.parents.get(parent);
+    }
+
+    /* istanbul ignore next: paranoid check */
+    throw new Error("Unable to find the scope of " + node.type);
+  }
+
+  // declares a `var` at the start of the scope, see `insertScopeVariables`
+  declareVariable(scope: Node, name: string): void {
+    let variables = this.scopeVariables.get(scope);
+
+    if (!variables) {
+      let pos: number;
+
+      if (scope.type === "Program") {
+        pos = this.bodyStart(scope);
+      } else if (scope.type === "StaticBlock") {
+        // a static block with a decision is never empty
+        pos = scope.body[0].start;
+      } else {
+        const fn = scope as ESTree.Function | ESTree.ArrowFunctionExpression;
+
+        // the "{" of a converted arrow function is inserted before this, see `convertArrowExpression`
+        pos = this.convertedArrows.has(fn)
+          ? fn.body!.start
+          : this.bodyStart(fn.body as ESTree.FunctionBody);
+      }
+
+      variables = { pos, names: new Set() };
+      this.scopeVariables.set(scope, variables);
+    }
+
+    variables.names.add(name);
+  }
+
+  // the declarations go before any counters, so they are inserted when the whole program is visited
+  insertScopeVariables(): void {
+    for (const { pos, names } of this.scopeVariables.values()) {
+      this.s.prependRight(pos, `var ${[...names].join(",")};`);
+    }
+  }
+
+  // the conditions of the decision in evaluation order. The `&&` and `||` operands
+  // are linked to the condition evaluated after them, like a binary decision diagram.
+  findConditions(node: Node): Condition[] {
+    const conditions: Condition[] = [];
+    const counts = new Map<Node, number>();
+
+    const isOperator = (n: Node) => isDecisionOperator(unwrap(n)) && this.hintFor(n) !== "next";
+
+    const count = (n: Node): number => {
+      if (!isOperator(n)) {
+        return 1;
+      }
+
+      let c = counts.get(n);
+
+      if (c === undefined) {
+        const inner = unwrap(n) as ESTree.LogicalExpression;
+        c = count(inner.left) + count(inner.right);
+        counts.set(n, c);
+      }
+
+      return c;
+    };
+
+    const link = (n: Node, whenTrue: number, whenFalse: number): void => {
+      if (!isOperator(n)) {
+        conditions.push({ node: n, whenTrue, whenFalse });
+        return;
+      }
+
+      const inner = unwrap(n) as ESTree.LogicalExpression;
+      const right = conditions.length + count(inner.left);
+
+      if (inner.operator === "&&") {
+        link(inner.left, right, whenFalse);
+      } else {
+        link(inner.left, whenTrue, right);
+      }
+
+      link(inner.right, whenTrue, whenFalse);
+    };
+
+    link(node, DECISION_END, DECISION_END);
+    return conditions;
+  }
+
+  // Instruments the `&&`/`||` expression for modified condition/decision coverage.
+  //
+  // Each possible evaluation of the decision, a path through its conditions, is a test
+  // vector with a unique index: the falsy edge of a condition
+  // adds nothing to the index, the truthy edge adds the number of paths after the falsy edge.
+  // The conditions accumulate the index to a variable local to the function, so that
+  // recursive and concurrent async calls do not mix their vectors, and the condition
+  // ending the decision increments the hit count of the vector.
+  coverDecision(node: Node): void {
+    const conditions = this.findConditions(node);
+
+    if (conditions.length < 2) {
+      return;
+    }
+
+    const paths: number[] = Array.from({ length: conditions.length });
+    const pathsFrom = (next: number) => (next === DECISION_END ? 1 : paths[next]);
+
+    for (let i = conditions.length - 1; i >= 0; i--) {
+      paths[i] = pathsFrom(conditions[i].whenTrue) + pathsFrom(conditions[i].whenFalse);
+    }
+
+    if (paths[0] > MCDC_MAX_VECTORS) {
+      return;
+    }
+
+    const vectors: string[] = Array.from({ length: paths[0] });
+    const values: string[] = conditions.map(() => "-");
+
+    const walk = (i: number, index: number): void => {
+      if (i === DECISION_END) {
+        vectors[index] = values.join("");
+        return;
+      }
+
+      const { whenTrue, whenFalse } = conditions[i];
+      values[i] = "F";
+      walk(whenFalse, index);
+      values[i] = "T";
+      walk(whenTrue, index + pathsFrom(whenFalse));
+      values[i] = "-";
+    };
+
+    walk(0, 0);
+
+    const d = this.cov.newDecision(
+      this.loc(unwrap(node)),
+      conditions.map((c) => this.loc(unwrap(c.node))),
+      vectors,
+    );
+
+    const scope = this.varScopeFor(node);
+    const index = `${this.varName}_d${d}`;
+    const value = `${this.varName}_v`;
+
+    this.declareVariable(scope, index);
+    this.declareVariable(scope, value);
+
+    conditions.forEach(({ node: condition, whenTrue, whenFalse }, i) => {
+      const edge = (next: number, weight: number): string => {
+        if (next === DECISION_END) {
+          const vector = i === 0 ? weight : weight === 0 ? index : `${index}+${weight}`;
+          return this.increase("d", d, vector);
+        }
+
+        if (i === 0) {
+          return `${index}=${weight}`;
+        }
+
+        return weight === 0 ? "0" : `${index}+=${weight}`;
+      };
+
+      const whenTrueCode = edge(whenTrue, pathsFrom(whenFalse));
+      const whenFalseCode = edge(whenFalse, 0);
+
+      // a comma expression prevents inferring the name of the variable for functions and classes
+      const comma = isAnonymousDefinition(unwrap(condition));
+
+      this.wrapExpression(
+        condition,
+        `(${value}=${comma ? "(0," : ""}`,
+        `${comma ? ")" : ""},${value}?(${whenTrueCode}):(${whenFalseCode}),${value})`,
+      );
+    });
   }
 
   // visitors to run for the node, null when the node is not instrumented
@@ -662,7 +911,8 @@ function blockBody(this: VisitState, node: Node) {
 function convertArrowExpression(this: VisitState, node: ESTree.ArrowFunctionExpression) {
   if (node.body.type !== "BlockStatement") {
     this.convertedArrows.add(node);
-    this.s.appendRight(node.body.start, "{");
+    // on the left side, so that the MC/DC variables can be inserted after it, see `declareVariable`
+    this.s.appendLeft(node.body.start, "{");
     this.s.prependLeft(node.body.end, "}");
   }
 }
@@ -750,18 +1000,23 @@ function coverTernary(this: VisitState, node: ESTree.ConditionalExpression) {
 
 function coverLogicalExpression(this: VisitState, node: ESTree.LogicalExpression) {
   const { parent } = this.parents.get(node)!;
-  if (parent && parent.type === "LogicalExpression") {
-    return; // already processed
-  }
-  const leaves: Node[] = [];
-  this.findLeaves(node, leaves);
-  const b = this.cov.newBranch("binary-expr", this.loc(node), this.reportLogic);
-  for (const leaf of leaves) {
-    const hint = this.hintFor(leaf);
-    if (hint === "next") {
-      continue;
+  if (!parent || parent.type !== "LogicalExpression") {
+    const leaves: Node[] = [];
+    this.findLeaves(node, leaves);
+    const b = this.cov.newBranch("binary-expr", this.loc(node), this.reportLogic);
+    for (const leaf of leaves) {
+      const hint = this.hintFor(leaf);
+      if (hint === "next") {
+        continue;
+      }
+      this.insertLogicalCounter(leaf, b);
     }
-    this.insertLogicalCounter(leaf, b);
+  }
+
+  // the MC/DC conditions are wrapped inside the branch counters. The operands of `??`
+  // are not conditions, but can be decisions of their own.
+  if (this.mcdc && isDecisionOperator(node) && !isDecisionOperator(parent)) {
+    this.coverDecision(node);
   }
 }
 
@@ -964,6 +1219,7 @@ function instrumentProgram(
     visitorOpts.reportLogic,
     visitorOpts.ignoreLines,
     visitorOpts.storeInputSourceMap,
+    visitorOpts.mcdc,
   );
 
   // the rewire plugin (and potentially other middleware)
@@ -992,6 +1248,7 @@ function instrumentProgram(
   for (const statement of program.body) {
     visitState.visit(statement, program, "body");
   }
+  visitState.insertScopeVariables();
 
   visitState.cov.freeze();
   const coverageData: InstrumentedCoverageData = visitState.cov.toJSON();

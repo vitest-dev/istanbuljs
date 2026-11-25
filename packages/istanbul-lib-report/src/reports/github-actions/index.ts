@@ -1,30 +1,30 @@
 import type { FileCoverage } from "@vitest/istanbul-lib-coverage";
 
-import type { ContentWriter } from "../../file-writer";
-import type { Context, ReportNode } from "../../index";
+import type { ContentWriter, Context, ReportNode } from "../../index";
 import ReportBase from "../../report-base";
+
+type AnnotationLevel = "notice" | "warning" | "error";
 
 /** options accepted by {@link GithubActionsReport} */
 export interface GithubActionsOptions {
   /** the file to write the workflow commands to, defaults to the console */
   file?: string | null;
   /**
-   * the annotation level, defaults to `warning`. Reports run before coverage
-   * thresholds are checked, so the level cannot follow the threshold result;
-   * use `error` when every uncovered line fails the build, as with 100% thresholds.
+   * the annotation level, defaults to `warning`. Use `error` when any
+   * uncovered line fails the build, as with 100% coverage thresholds.
    */
-  level?: "notice" | "warning" | "error";
+  level?: AnnotationLevel;
 }
 
 /**
  * Prints one GitHub Actions annotation workflow command per file with uncovered
- * statements, functions or branches. The annotation is anchored at the file's
- * first uncovered line and its message lists every uncovered line, so a file
- * takes a single slot of the 10 annotations per level GitHub shows per step.
+ * lines, branches or functions. The annotation is anchored at the file's first
+ * uncovered line and its message lists every uncovered line, so a file takes a
+ * single slot of the 10 annotations per level GitHub shows per step.
  */
 class GithubActionsReport extends ReportBase {
   declare file: string | null;
-  declare level: "notice" | "warning" | "error";
+  declare level: AnnotationLevel;
   declare cw: ContentWriter | null;
 
   constructor(opts?: GithubActionsOptions) {
@@ -41,18 +41,16 @@ class GithubActionsReport extends ReportBase {
   }
 
   onDetail(node: ReportNode): void {
-    const fileCoverage = node.getFileCoverage();
-    const lines = uncoveredLines(fileCoverage);
+    const fc = node.getFileCoverage();
+    const lines = uncoveredLines(fc);
     if (lines.length === 0) {
       return;
     }
 
+    // workflow command format: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#setting-a-warning-message
     this.cw!.println(
-      formatCommand(
-        this.level,
-        { file: fileCoverage.path, line: String(lines[0]), title: "Uncovered code" },
-        `Uncovered ${lineRanges(lines)}`,
-      ),
+      `::${this.level} file=${escapeProperty(fc.path)},line=${lines[0]},title=Uncovered code` +
+        `::Uncovered ${lines.length === 1 ? "line" : "lines"} ${lineRanges(lines)}`,
     );
   }
 
@@ -61,28 +59,24 @@ class GithubActionsReport extends ReportBase {
   }
 }
 
-/** sorted start lines of every statement, function and branch path with zero hits */
+/**
+ * sorted uncovered lines: the lines the text report lists, plus the lines of
+ * partially covered branches and of functions that never ran
+ */
 function uncoveredLines(fc: FileCoverage): number[] {
-  const lines = new Set<number>();
+  const lines = new Set(fc.getUncoveredLines().map(Number));
 
-  for (const [id, hits] of Object.entries(fc.s)) {
-    if (hits === 0) lines.add(fc.statementMap[id]!.start.line);
+  for (const [line, { coverage }] of Object.entries(fc.getBranchCoverageByLine())) {
+    if (coverage < 100) lines.add(Number(line));
   }
   for (const [id, hits] of Object.entries(fc.f)) {
     if (hits === 0) lines.add(fc.fnMap[id]!.loc.start.line);
-  }
-  for (const [id, paths] of Object.entries(fc.b)) {
-    const branch = fc.branchMap[id]!;
-    paths.forEach((hits, i) => {
-      // an implicit else has an empty location, so fall back to the branch's own
-      if (hits === 0) lines.add(branch.locations[i]?.start.line ?? branch.loc.start.line);
-    });
   }
 
   return [...lines].sort((a, b) => a - b);
 }
 
-/** `[3, 4, 5, 9]` as `lines 3-5, 9` */
+/** sorted, distinct `[3, 4, 5, 9]` as `3-5, 9` */
 function lineRanges(lines: number[]): string {
   const runs: [number, number][] = [];
   for (const line of lines) {
@@ -94,29 +88,16 @@ function lineRanges(lines: number[]): string {
     }
   }
 
-  const text = runs.map(([start, end]) => (start === end ? `${start}` : `${start}-${end}`));
-  return `${lines.length === 1 ? "line" : "lines"} ${text.join(", ")}`;
-}
-
-// annotation workflow command format, matching Vitest's `github-actions` test reporter:
-// https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#setting-an-error-message
-function formatCommand(
-  command: string,
-  properties: Record<string, string>,
-  message: string,
-): string {
-  const props = Object.entries(properties)
-    .map(([key, value]) => `${key}=${escapeProperty(value)}`)
-    .join(",");
-  return `::${command} ${props}::${escapeData(message)}`;
-}
-
-function escapeData(s: string): string {
-  return s.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+  return runs.map(([start, end]) => (start === end ? `${start}` : `${start}-${end}`)).join(", ");
 }
 
 function escapeProperty(s: string): string {
-  return escapeData(s).replace(/:/g, "%3A").replace(/,/g, "%2C");
+  return s
+    .replace(/%/g, "%25")
+    .replace(/\r/g, "%0D")
+    .replace(/\n/g, "%0A")
+    .replace(/:/g, "%3A")
+    .replace(/,/g, "%2C");
 }
 
 export default GithubActionsReport;

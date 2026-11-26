@@ -42,10 +42,10 @@ class GithubActionsReport extends ReportBase {
 
   onDetail(node: ReportNode): void {
     const fc = node.getFileCoverage();
-    const file = escapeProperty(fc.path);
+    const file = fc.path.replace(/[%\r\n:,]/g, encodeURIComponent);
 
     // workflow command format: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#setting-a-warning-message
-    for (const [start, end] of lineRuns(uncoveredLines(fc))) {
+    for (const [start, end] of uncoveredRuns(fc)) {
       this.cw!.println(
         `::${this.level} file=${file},line=${start},endLine=${end},title=Uncovered code` +
           `::Uncovered ${start === end ? `line ${start}` : `lines ${start}-${end}`}`,
@@ -59,44 +59,36 @@ class GithubActionsReport extends ReportBase {
 }
 
 /**
- * sorted uncovered lines: the lines the text report lists, plus the lines of
- * partially covered branches and of functions that never ran
+ * Runs of uncovered lines as `[start, end]`: lines with unrun statements, partly
+ * covered branches, or the start of a function that never ran. As in the text
+ * report's "Uncovered Line #s", a run spans lines without statements and ends
+ * at the next covered line.
  */
-function uncoveredLines(fc: FileCoverage): number[] {
-  const lines = new Set(fc.getUncoveredLines().map(Number));
-
+function uncoveredRuns(fc: FileCoverage): [number, number][] {
+  const covered = new Map(
+    Object.entries(fc.getLineCoverage()).map(([line, hits]) => [Number(line), hits > 0]),
+  );
   for (const [line, { coverage }] of Object.entries(fc.getBranchCoverageByLine())) {
-    if (coverage < 100) lines.add(Number(line));
+    if (coverage < 100) covered.set(Number(line), false);
   }
   for (const [id, hits] of Object.entries(fc.f)) {
-    if (hits === 0) lines.add(fc.fnMap[id]!.loc.start.line);
+    if (hits === 0) covered.set(fc.fnMap[id]!.loc.start.line, false);
   }
 
-  return [...lines].sort((a, b) => a - b);
-}
-
-/** sorted, distinct `[3, 4, 5, 9]` as `[[3, 5], [9, 9]]` */
-function lineRuns(lines: number[]): [number, number][] {
   const runs: [number, number][] = [];
-  for (const line of lines) {
-    const last = runs.at(-1);
-    if (last && line === last[1] + 1) {
-      last[1] = line;
+  let open = false;
+  for (const line of [...covered.keys()].sort((a, b) => a - b)) {
+    if (covered.get(line)) {
+      open = false;
+    } else if (open) {
+      runs.at(-1)![1] = line;
     } else {
       runs.push([line, line]);
+      open = true;
     }
   }
 
   return runs;
-}
-
-function escapeProperty(s: string): string {
-  return s
-    .replace(/%/g, "%25")
-    .replace(/\r/g, "%0D")
-    .replace(/\n/g, "%0A")
-    .replace(/:/g, "%3A")
-    .replace(/,/g, "%2C");
 }
 
 export default GithubActionsReport;

@@ -23,11 +23,11 @@ describe("github-actions report", () => {
   afterAll(() => FileWriter.stopCapture());
   beforeEach(() => FileWriter.resetOutput());
 
-  it("annotates each run of consecutive uncovered lines", () => {
+  it("annotates each run of uncovered lines, spanning lines without statements", () => {
     const output = report([
       fileCoverage("/repo/src/render.ts", {
-        statementMap: { 0: range(12), 1: range(40), 2: range(41), 3: range(42), 4: range(55) },
-        s: { 0: 3, 1: 0, 2: 0, 3: 0, 4: 0 },
+        statementMap: { 0: range(12), 1: range(40), 2: range(42), 3: range(50), 4: range(55) },
+        s: { 0: 3, 1: 0, 2: 0, 3: 2, 4: 0 },
       }),
       fileCoverage("/repo/src/parse.ts", {
         statementMap: { 0: range(7) },
@@ -45,8 +45,8 @@ describe("github-actions report", () => {
   it("counts partially covered branches and functions whose lines ran", () => {
     const output = report([
       fileCoverage("/repo/src/branch.ts", {
-        statementMap: { 0: range(4), 1: range(21) },
-        s: { 0: 1, 1: 1 },
+        statementMap: { 0: range(4), 1: range(10), 2: range(21) },
+        s: { 0: 1, 1: 1, 2: 1 },
         fnMap: { 0: { name: "unused", decl: range(20), loc: range(21), line: 21 } },
         f: { 0: 0 },
         branchMap: {

@@ -17,10 +17,10 @@ export interface GithubActionsOptions {
 }
 
 /**
- * Prints one GitHub Actions annotation workflow command per file with uncovered
- * lines, branches or functions. The annotation is anchored at the file's first
- * uncovered line and its message lists every uncovered line, so a file takes a
- * single slot of the 10 warning or 10 error annotations GitHub shows per step.
+ * Prints one GitHub Actions annotation workflow command per run of consecutive
+ * uncovered lines, so each gap shows next to its own code in a pull request's
+ * diff. GitHub shows 10 warning and 10 error annotations per step and drops the
+ * rest.
  */
 class GithubActionsReport extends ReportBase {
   declare file: string | null;
@@ -42,16 +42,15 @@ class GithubActionsReport extends ReportBase {
 
   onDetail(node: ReportNode): void {
     const fc = node.getFileCoverage();
-    const lines = uncoveredLines(fc);
-    if (lines.length === 0) {
-      return;
-    }
+    const file = escapeProperty(fc.path);
 
     // workflow command format: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#setting-a-warning-message
-    this.cw!.println(
-      `::${this.level} file=${escapeProperty(fc.path)},line=${lines[0]},title=Uncovered code` +
-        `::Uncovered ${lines.length === 1 ? "line" : "lines"} ${lineRanges(lines)}`,
-    );
+    for (const [start, end] of lineRuns(uncoveredLines(fc))) {
+      this.cw!.println(
+        `::${this.level} file=${file},line=${start},endLine=${end},title=Uncovered code` +
+          `::Uncovered ${start === end ? `line ${start}` : `lines ${start}-${end}`}`,
+      );
+    }
   }
 
   onEnd(): void {
@@ -76,8 +75,8 @@ function uncoveredLines(fc: FileCoverage): number[] {
   return [...lines].sort((a, b) => a - b);
 }
 
-/** sorted, distinct `[3, 4, 5, 9]` as `3-5, 9` */
-function lineRanges(lines: number[]): string {
+/** sorted, distinct `[3, 4, 5, 9]` as `[[3, 5], [9, 9]]` */
+function lineRuns(lines: number[]): [number, number][] {
   const runs: [number, number][] = [];
   for (const line of lines) {
     const last = runs.at(-1);
@@ -88,7 +87,7 @@ function lineRanges(lines: number[]): string {
     }
   }
 
-  return runs.map(([start, end]) => (start === end ? `${start}` : `${start}-${end}`)).join(", ");
+  return runs;
 }
 
 function escapeProperty(s: string): string {

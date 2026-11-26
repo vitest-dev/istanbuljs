@@ -23,7 +23,7 @@ describe("github-actions report", () => {
   afterAll(() => FileWriter.stopCapture());
   beforeEach(() => FileWriter.resetOutput());
 
-  it("annotates each file at its first uncovered line and lists the rest as ranges", () => {
+  it("annotates each run of consecutive uncovered lines", () => {
     const output = report([
       fileCoverage("/repo/src/render.ts", {
         statementMap: { 0: range(12), 1: range(40), 2: range(41), 3: range(42), 4: range(55) },
@@ -36,8 +36,9 @@ describe("github-actions report", () => {
     ]);
 
     expect(output.trim().split("\n").sort()).toEqual([
-      "::warning file=/repo/src/parse.ts,line=7,title=Uncovered code::Uncovered line 7",
-      "::warning file=/repo/src/render.ts,line=40,title=Uncovered code::Uncovered lines 40-42, 55",
+      "::warning file=/repo/src/parse.ts,line=7,endLine=7,title=Uncovered code::Uncovered line 7",
+      "::warning file=/repo/src/render.ts,line=40,endLine=42,title=Uncovered code::Uncovered lines 40-42",
+      "::warning file=/repo/src/render.ts,line=55,endLine=55,title=Uncovered code::Uncovered line 55",
     ]);
   });
 
@@ -55,7 +56,8 @@ describe("github-actions report", () => {
       }),
     ]);
 
-    expect(output).toContain("::Uncovered lines 4, 21");
+    expect(output).toContain("line=4,endLine=4,");
+    expect(output).toContain("line=21,endLine=21,");
   });
 
   it("uses the configured annotation level", () => {

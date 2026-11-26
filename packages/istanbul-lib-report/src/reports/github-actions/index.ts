@@ -17,9 +17,8 @@ export interface GithubActionsOptions {
 }
 
 /**
- * Prints one GitHub Actions annotation workflow command per run of consecutive
- * uncovered lines, so each gap shows next to its own code in a pull request's
- * diff. GitHub shows 10 warning and 10 error annotations per step and drops the
+ * Prints one GitHub Actions annotation workflow command per run of uncovered
+ * lines, so each gap shows next to its own code in a pull request's diff. GitHub shows 10 warning and 10 error annotations per step and drops the
  * rest.
  */
 class GithubActionsReport extends ReportBase {
